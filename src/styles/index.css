@@ -62,6 +62,10 @@
   --color-divider-teal: #5d8091;
   --color-gold:         #c5a059;
 
+  /* Shared focus-ring colour — every interactive element uses this, never
+     the browser default outline (which `focus:outline-none` disables). */
+  --color-focus-ring: #244b74;
+
   /* ── Typography — 2-family system ───────────────────────────────────────
        font-brand : Noticia Text  — logo wordmark, H1/H2 display
        font-sans  : Poppins       — nav, body, buttons, captions, footer
@@ -72,6 +76,24 @@
   /* Legacy aliases — prevents breakage if any component still refs these */
   --font-serif:    var(--font-brand);
   --font-heading:  var(--font-sans);
+
+  /* ── Type scale — small end floored at 13px per the caption rule below.
+       Replaces the scattered text-[0.72rem]/[0.76rem]/[0.78rem] one-offs
+       (several of which sat under the site's own documented 13px floor).
+  ────────────────────────────────────────────────────────────────────────── */
+  --text-xs: 0.8125rem;   /* 13px — badges, meta text, table cells */
+  --text-sm: 0.875rem;    /* 14px — form labels, nav links, secondary body */
+  --text-lg: 1.125rem;    /* 18px — lead paragraphs, hero subtext */
+
+  /* ── Radius scale — replaces ad hoc rounded-[5px]/[8px]/[12px]/[16px] ──── */
+  --radius-control: 0.375rem; /* 6px  — buttons, inputs, tab pills */
+  --radius-card:    0.625rem; /* 10px — cards, tiles, photo frames */
+  --radius-panel:   1rem;     /* 16px — large dark CTA/feature panels */
+
+  /* ── Shadow scale — replaces 8+ hand-written shadow-[...] strings ──────── */
+  --shadow-control: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --shadow-card:    0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-panel:   0 16px 40px rgba(0, 0, 0, 0.22);
 }
 
 /* ─── Base layer ───────────────────────────────────────────────────────────── */
@@ -138,5 +160,14 @@
   }
   a:not([class]):hover {
     color: var(--color-link-hover);
+  }
+
+  /* Global keyboard-focus indicator — every component that sets
+     `focus:outline-none` (buttons, nav links, form controls) relies on
+     this instead of silently dropping focus visibility. */
+  :focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+    border-radius: 2px;
   }
 }

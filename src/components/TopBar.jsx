@@ -10,11 +10,11 @@ export default function TopBar() {
       <div className="w-full max-w-[1240px] mx-auto px-6 py-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-5">
           <a href={phoneHref} className="inline-flex items-center gap-1.5 text-white no-underline hover:text-sage transition-all">
-            <Phone size={13} className="text-[#29abe2]" />
+            <Phone size={13} className="text-divider-teal" />
             <span className="tracking-[0.04em]">{phone}</span>
           </a>
           <span className="inline-flex items-center gap-1.5 text-white">
-            <MapPin size={13} className="text-[#29abe2]" />
+            <MapPin size={13} className="text-divider-teal" />
             <span>{address}</span>
           </span>
         </div>
