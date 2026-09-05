@@ -1,10 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import clsx from 'clsx';
 import { Menu, X, CalendarCheck, Phone } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { siteData } from '../data/siteData';
 
 export default function Navbar({ onOpenBooking }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setMobileMenuOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mobileMenuOpen]);
 
   const navItems = [
     { id: '', path: '/', label: 'Home', multiline: false },
@@ -59,9 +69,10 @@ export default function Navbar({ onOpenBooking }) {
                 key={item.id}
                 to={item.path}
                 className={({ isActive }) =>
-                  `inline-flex flex-col items-center justify-center text-[0.88rem] font-medium tracking-[0.02em] px-0.5 py-1.5 relative transition-all no-underline text-center ${
+                  clsx(
+                    'inline-flex flex-col items-center justify-center text-sm font-medium tracking-[0.02em] px-0.5 py-1.5 relative transition-all no-underline text-center rounded-sm',
                     isActive ? 'text-white' : 'text-white/90 hover:text-maroon'
-                  }`
+                  )
                 }
                 onClick={handleNavClick}
               >
@@ -158,9 +169,10 @@ export default function Navbar({ onOpenBooking }) {
               <NavLink
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center justify-between text-[1.15rem] font-serif tracking-[0.05em] py-2 no-underline ${
+                  clsx(
+                    'flex items-center justify-between text-lg font-serif tracking-[0.05em] py-2 no-underline',
                     isActive ? 'text-maroon' : 'text-white hover:text-maroon'
-                  }`
+                  )
                 }
                 onClick={handleNavClick}
               >

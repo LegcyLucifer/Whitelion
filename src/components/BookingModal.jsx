@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, Users, CheckCircle, MapPin, Sparkles } from 'lucide-react';
 import Button from './Button';
+import Badge from './Badge';
 import { siteData } from '../data/siteData';
 
 export default function BookingModal({ isOpen, onClose, showToast }) {
@@ -16,6 +17,18 @@ export default function BookingModal({ isOpen, onClose, showToast }) {
     notes: ''
   });
   const [bookingRef, setBookingRef] = useState('');
+
+  const closeButtonRef = React.useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    closeButtonRef.current?.focus();
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -43,17 +56,21 @@ export default function BookingModal({ isOpen, onClose, showToast }) {
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[2000] flex items-center justify-center p-4 md:p-6 overflow-y-auto transition-opacity duration-300" onClick={onClose}>
-      <div className="bg-white rounded-[12px] shadow-[0_20px_40px_rgba(0,0,0,0.3)] w-full max-w-[620px] max-h-[90vh] overflow-y-auto relative p-6 md:p-10 mx-auto my-auto transition-transform duration-300" onClick={(e) => e.stopPropagation()}>
-        <button className="absolute top-4 right-4 bg-transparent border-none text-[#656b73] cursor-pointer p-2 transition-colors hover:text-black z-10" onClick={onClose} aria-label="Close modal">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Reserve your table"
+        className="bg-white rounded-panel shadow-panel w-full max-w-[620px] max-h-[90vh] overflow-y-auto relative p-6 md:p-10 mx-auto my-auto transition-transform duration-300"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button ref={closeButtonRef} className="absolute top-4 right-4 bg-transparent border-none text-[#656b73] cursor-pointer p-2 transition-colors hover:text-black z-10" onClick={onClose} aria-label="Close modal">
           <X size={24} />
         </button>
 
         {step === 'form' ? (
           <div>
             <div className="text-center mb-6">
-              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-[0.76rem] font-bold tracking-[0.08em] uppercase rounded-full bg-maroon/10 text-maroon border border-maroon/30 mb-2">
-                Instant Table Booking
-              </span>
+              <Badge tone="maroon" className="mb-2">Instant Table Booking</Badge>
               <h2 className="text-[1.85rem] mb-1.5 font-serif text-black font-bold">Reserve Your Table</h2>
               <p className="text-[0.92rem] text-[#656b73]">
                 At {siteData.info.name} • Best seats reserved for your dining experience
