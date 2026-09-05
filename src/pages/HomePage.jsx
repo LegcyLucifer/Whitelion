@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { siteData } from '../data/siteData';
 import { useSEO } from '../hooks/useSEO';
+import Button from '../components/Button';
+import Badge from '../components/Badge';
+import CtaBanner from '../components/CtaBanner';
 
 export default function HomePage({ onOpenBooking, showToast }) {
   const navigate = useNavigate();
@@ -31,10 +34,10 @@ export default function HomePage({ onOpenBooking, showToast }) {
   const [joined, setJoined] = useState(false);
 
   const iconMap = {
-    Dog: <Dog size={30} />,
-    Tv: <Tv size={30} />,
-    HelpCircle: <HelpCircle size={30} />,
-    Target: <Target size={30} />
+    Dog: <Dog size={22} />,
+    Tv: <Tv size={22} />,
+    HelpCircle: <HelpCircle size={22} />,
+    Target: <Target size={22} />
   };
 
   const handleNav = (path) => {
@@ -81,34 +84,24 @@ export default function HomePage({ onOpenBooking, showToast }) {
 
         {/* ── Content ────────────────────────────────────────────────── */}
         <div className="w-full max-w-[1240px] mx-auto px-6 relative z-[2] max-w-[840px] py-10">
-          <span className="inline-block font-sans text-[0.88rem] font-bold tracking-[0.18em] text-[#e5c788] uppercase mb-4 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-            A MODERN CLASSIC. A LOCAL SOUL
-          </span>
+          <Badge variant="plain" tone="gold" onDark className="mb-4">
+            A Modern Classic. A Local Soul
+          </Badge>
           {/* ✅ h1 describes the page — not the newsletter popup */}
           <h1 className="text-white text-[clamp(2.4rem,4.8vw,4rem)] font-bold tracking-[-0.015em] leading-[1.15] mb-5 drop-shadow-[0_4px_18px_rgba(0,0,0,0.6)]">
             Serving up the perfect pour and locally-sourced plates in the heart of Amersham
           </h1>
-          <p className="text-[#f1f5f9] text-[clamp(1.05rem,1.8vw,1.25rem)] leading-[1.6] mb-8 max-w-[700px]">
+          <p className="text-[#f1f5f9] text-lg leading-[1.6] mb-8 max-w-[700px]">
             A unique fusion of authentic Indian cuisine and traditional British pub classics,
             accompanied by local cask ales, cold draught lagers, and fine wines.
           </p>
           <div className="flex flex-wrap gap-4">
-            {/* Primary CTA — navy (high contrast, 10.33:1) */}
-            <button
-              className="inline-flex items-center justify-center gap-2 px-[26px] py-[11px] text-[0.94rem] font-semibold tracking-[0.03em] rounded-[5px] transition-all bg-book-table text-white border border-book-table hover:bg-book-table-hover hover:shadow-[0_4px_14px_rgba(50,65,88,0.4)] hover:-translate-y-[1px] cursor-pointer"
-              onClick={onOpenBooking}
-            >
-              <CalendarCheck size={17} />
-              <span>Book a Table</span>
-            </button>
-            {/* ✅ FIXED: was bg-sage (2.43:1 WCAG fail) → now bg-maroon (7:1 pass) */}
-            <button
-              className="inline-flex items-center justify-center gap-2 px-[26px] py-[11px] text-[0.94rem] font-semibold tracking-[0.03em] rounded-[5px] transition-all bg-maroon text-white border border-white/70 hover:bg-maroon-hover hover:border-white hover:shadow-[0_4px_14px_rgba(158,52,56,0.4)] hover:-translate-y-[1px] cursor-pointer"
-              onClick={() => handleNav('menu')}
-            >
-              <UtensilsCrossed size={17} />
-              <span>Our Food &amp; Drinks</span>
-            </button>
+            <Button variant="navy" icon={CalendarCheck} onClick={onOpenBooking}>
+              Book a Table
+            </Button>
+            <Button variant="primary" icon={UtensilsCrossed} onClick={() => handleNav('menu')}>
+              Our Food &amp; Drinks
+            </Button>
           </div>
         </div>
       </section>
@@ -135,18 +128,23 @@ export default function HomePage({ onOpenBooking, showToast }) {
         </div>
       </section>
 
-      {/* SECTION 3: 4 FEATURE HIGHLIGHTS STRIP */}
-      <section className="py-15 bg-warm-cream border-b border-[#eee8dc]">
+      {/* SECTION 3: 4 FEATURE HIGHLIGHTS STRIP — horizontal cards, not the
+          centered-icon-circle formula reused for Contact's methods, Party
+          Venue's packages, and Christmas's course cards. These are static
+          amenities, not links, so no hover-lift (that idiom is reserved
+          for tiles that actually navigate). */}
+      <section className="py-16 bg-warm-cream border-b border-[#eee8dc]">
         <div className="w-full max-w-[1240px] mx-auto px-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {siteData.highlights.map((item) => (
-              <div key={item.id} className="bg-white rounded-[8px] p-8 px-6 text-center shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-black/5 transition-all duration-250 flex flex-col items-center hover:-translate-y-1.5 hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] hover:border-maroon/30 group">
-                {/* Accent icon circle — sage used here as decorative tint, not a CTA */}
-                <div className="w-16 h-16 rounded-full bg-sage-subtle text-[#4b7349] flex items-center justify-center mb-5 transition-all duration-250 group-hover:bg-maroon group-hover:text-white group-hover:scale-110">
+              <div key={item.id} className="bg-white rounded-card p-6 shadow-card border border-black/5 flex flex-col gap-4 transition-colors hover:border-maroon/30">
+                <div className="w-11 h-11 rounded-control bg-sage-subtle text-[#4b7349] flex items-center justify-center shrink-0">
                   {iconMap[item.icon]}
                 </div>
-                <h3 className="text-[1.5rem] mb-2.5 text-black font-bold">{item.title}</h3>
-                <p className="text-[0.95rem] text-[#555e69]">{item.desc}</p>
+                <div>
+                  <h3 className="text-xl mb-1.5 text-black font-bold">{item.title}</h3>
+                  <p className="text-sm text-[#555e69] leading-[1.55]">{item.desc}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -157,20 +155,26 @@ export default function HomePage({ onOpenBooking, showToast }) {
       <section className="py-[100px] bg-white">
         <div className="w-full max-w-[1240px] mx-auto px-6">
           <div className="text-center max-w-[800px] mx-auto mb-12">
-            <span className="inline-flex items-center gap-1.5 px-[14px] py-[5px] text-[0.76rem] font-bold tracking-[0.08em] uppercase rounded-full bg-[#5d8091]/15 text-divider-teal border border-[#5d8091]/35 mb-2.5">
+            <span className="block text-xs font-bold tracking-[0.2em] uppercase text-slate-navy mb-2.5">
               Real Place Photography
             </span>
             <h2 className="text-[2.4rem] mb-2.5 font-bold">
               Inside The White Lion Amersham
             </h2>
-            <p className="text-[#555e69] text-[1.02rem] max-w-[640px] mx-auto">
+            <p className="text-[#555e69] text-lg max-w-[640px] mx-auto">
               From our whitewashed cottage facade and floral beer garden to copper draft pumps and authentic tandoori plates.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Bento layout — one featured tile instead of a perfectly
+              uniform grid (the "stock card grid" pattern repeated
+              elsewhere on this page's own review/offer sections). Purely
+              a photo showcase (no click target), so cursor-pointer was
+              removed — it previously implied an interaction that didn't
+              exist. */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 auto-rows-[140px] sm:auto-rows-[180px] lg:auto-rows-[200px] gap-4">
             {siteData.venueGallery.map((item, idx) => (
-              <div key={idx} className="relative rounded-[8px] overflow-hidden aspect-square group cursor-pointer">
+              <div key={idx} className={`relative rounded-card overflow-hidden group ${idx === 0 ? 'col-span-2 row-span-2' : ''}`}>
                 <img
                   src={item.image}
                   alt={item.title}
@@ -178,7 +182,7 @@ export default function HomePage({ onOpenBooking, showToast }) {
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-end p-5">
-                  <span className="text-white font-semibold text-[0.95rem] tracking-[0.02em]">{item.title}</span>
+                  <span className="text-white font-semibold text-sm tracking-[0.02em]">{item.title}</span>
                 </div>
               </div>
             ))}
@@ -220,22 +224,12 @@ export default function HomePage({ onOpenBooking, showToast }) {
                 to the heart of Buckinghamshire.
               </p>
               <div className="flex flex-wrap gap-4 mt-2.5">
-                {/* ✅ FIXED: was bg-sage (WCAG fail) → bg-maroon */}
-                <button
-                  className="inline-flex items-center justify-center gap-2 px-[26px] py-[11px] text-[0.94rem] font-semibold tracking-[0.03em] rounded-[5px] transition-all bg-maroon text-white border border-white/70 shadow-[0_4px_14px_rgba(158,52,56,0.35)] hover:bg-maroon-hover hover:border-white hover:-translate-y-[1px] cursor-pointer"
-                  onClick={() => handleNav('menu')}
-                >
-                  <UtensilsCrossed size={16} />
-                  <span>View Menus</span>
-                </button>
-                {/* ✅ FIXED: label standardised to "Book a Table" */}
-                <button
-                  className="inline-flex items-center justify-center gap-2 px-[26px] py-[11px] text-[0.94rem] font-semibold tracking-[0.03em] rounded-[5px] transition-all bg-transparent text-black border border-black hover:bg-black hover:text-white cursor-pointer"
-                  onClick={onOpenBooking}
-                >
-                  <CalendarCheck size={16} />
-                  <span>Book a Table</span>
-                </button>
+                <Button variant="primary" icon={UtensilsCrossed} onClick={() => handleNav('menu')}>
+                  View Menus
+                </Button>
+                <Button variant="outline" icon={CalendarCheck} onClick={onOpenBooking}>
+                  Book a Table
+                </Button>
               </div>
             </div>
           </div>
@@ -300,51 +294,46 @@ export default function HomePage({ onOpenBooking, showToast }) {
       <section className="bg-white py-20">
         <div className="w-full max-w-[1240px] mx-auto px-6">
           <div className="text-center max-w-[720px] mx-auto mb-12">
-            {/* Sage used here as a decorative badge tint — not a CTA background */}
-            <span className="inline-flex items-center gap-1.5 px-[14px] py-[5px] text-[0.76rem] font-bold tracking-[0.08em] uppercase rounded-full bg-sage-subtle text-[#4b7349] border border-sage/45 mb-3">
+            <span className="block text-xs font-bold tracking-[0.2em] uppercase text-slate-navy mb-3">
               Everyday Value
             </span>
             <h2 className="text-[2.4rem] mb-3.5 font-bold">Delicious Deals For Every Day</h2>
-            <p className="text-[#555e69] text-[1.05rem]">
+            <p className="text-[#555e69] text-lg">
               From Cask Ale Mondays to Fizz Fridays and 2 for £15 cocktails, there is always an occasion to celebrate at The White Lion.
             </p>
           </div>
 
+          {/* Cards aren't links themselves (only the button is) — shadow
+              deepens on hover but doesn't lift, so hover doesn't imply a
+              click target that isn't there. */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
             {siteData.offers.slice(0, 3).map((offer) => (
-              <div key={offer.id} className="bg-white rounded-[12px] overflow-hidden shadow-md border border-[#f3f4f6] transition-all hover:-translate-y-1.5 hover:shadow-lg flex flex-col group">
+              <div key={offer.id} className="bg-white rounded-card overflow-hidden shadow-card transition-shadow hover:shadow-lg border border-[#f3f4f6] flex flex-col group">
                 <div className="relative h-[220px] overflow-hidden">
                   <img src={offer.image} alt={offer.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
-                  <span className="absolute top-4 right-4 bg-book-table text-white px-3 py-1 rounded-[4px] text-[0.75rem] font-bold tracking-[0.05em] uppercase shadow-md">
+                  <span className="absolute top-4 right-4 bg-book-table text-white px-3 py-1 rounded text-xs font-bold tracking-[0.05em] uppercase shadow-control">
                     {offer.badge}
                   </span>
                 </div>
                 <div className="p-6 flex flex-col flex-1">
-                  <span className="text-[0.82rem] text-maroon font-bold uppercase mb-1.5">
+                  <span className="text-xs text-maroon font-bold uppercase mb-1.5">
                     {offer.day}
                   </span>
                   <h3 className="text-[1.4rem] mb-2 text-black font-bold">{offer.title}</h3>
-                  <p className="text-[0.95rem] text-[#656b73] mb-6 flex-1 leading-[1.5]">{offer.desc}</p>
-                  {/* ✅ FIXED: was bg-sage (WCAG fail) → bg-maroon */}
-                  <button
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 text-[0.86rem] font-semibold tracking-[0.03em] rounded-[5px] transition-all bg-maroon text-white border border-white/70 hover:bg-maroon-hover hover:border-white hover:shadow-[0_4px_14px_rgba(158,52,56,0.35)] hover:-translate-y-[1px] w-full cursor-pointer"
-                    onClick={onOpenBooking}
-                  >
-                    <span>Book Your Table</span>
-                  </button>
+                  <p className="text-sm text-[#656b73] mb-6 flex-1 leading-[1.5]">{offer.desc}</p>
+                  <Button variant="primary" size="sm" className="w-full" onClick={onOpenBooking}>
+                    Book Your Table
+                  </Button>
                 </div>
               </div>
             ))}
           </div>
 
           <div className="text-center">
-            <button
-              className="inline-flex items-center justify-center gap-2 px-[26px] py-[11px] text-[0.94rem] font-semibold tracking-[0.03em] rounded-[5px] transition-all bg-transparent text-black border border-black hover:bg-black hover:text-white cursor-pointer"
-              onClick={() => handleNav('offers')}
-            >
+            <Button variant="outline" onClick={() => handleNav('offers')}>
               <span>Explore All 6 Special Offers</span>
               <ArrowRight size={16} />
-            </button>
+            </Button>
           </div>
         </div>
       </section>
@@ -352,33 +341,23 @@ export default function HomePage({ onOpenBooking, showToast }) {
       {/* SECTION 8: PRIVATE EVENTS & VENUE HIRE CALLOUT */}
       <section className="py-20 bg-warm-cream border-t border-[#eee8dc]">
         <div className="w-full max-w-[1240px] mx-auto px-6">
-          <div className="bg-gradient-to-br from-[#172534] to-[#232f3c] rounded-2xl p-6 md:p-12 text-white flex items-center justify-between gap-10 flex-wrap shadow-lg">
-            <div className="max-w-[640px]">
-              <span className="inline-flex items-center gap-1.5 px-[14px] py-[5px] text-[0.76rem] font-bold tracking-[0.08em] uppercase rounded-full bg-[#5d8091]/15 text-divider-teal border border-[#5d8091]/35 mb-4">
-                Private Events &amp; Celebrations
-              </span>
-              <h2 className="text-white text-[2.4rem] mb-3.5 font-bold">
-                Planning an Event or Private Party?
-              </h2>
-              <p className="text-[#cbd5e1] text-[1.05rem] leading-[1.7]">
-                Guest capacity of 180 to 320 people, free parking for 60 cars, and no venue hire fee for up to 50 guests. We provide tailored buffets, authentic Indian banquets, and canapés.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-4">
-              {/* ✅ FIXED: was bg-sage (WCAG fail) → bg-maroon */}
-              <button
-                className="inline-flex items-center justify-center gap-2 px-[26px] py-[11px] text-[0.94rem] font-semibold tracking-[0.03em] rounded-[5px] transition-all bg-maroon text-white border border-white/70 hover:bg-maroon-hover hover:border-white hover:shadow-[0_4px_14px_rgba(158,52,56,0.45)] hover:-translate-y-[1px] cursor-pointer"
-                onClick={() => handleNav('party-venue')}
-              >
-                <span>Discover Venue Hire</span>
-                <ArrowRight size={16} />
-              </button>
-              <a href={siteData.info.phoneHref} className="inline-flex items-center justify-center gap-2 px-[26px] py-[11px] text-[0.94rem] font-semibold tracking-[0.03em] rounded-[5px] transition-all bg-transparent text-white border border-white/85 hover:bg-white hover:text-dark-navy cursor-pointer no-underline">
-                <Phone size={16} />
-                <span>Call 01494 766 849</span>
-              </a>
-            </div>
-          </div>
+          <CtaBanner
+            eyebrow={<Badge variant="plain" tone="gold" onDark className="mb-4">Private Events &amp; Celebrations</Badge>}
+            title="Planning an Event or Private Party?"
+            description="Guest capacity of 180 to 320 people, free parking for 60 cars, and no venue hire fee for up to 50 guests. We provide tailored buffets, authentic Indian banquets, and canapés."
+          >
+            <Button variant="primary" onClick={() => handleNav('party-venue')}>
+              <span>Discover Venue Hire</span>
+              <ArrowRight size={16} />
+            </Button>
+            <a
+              href={siteData.info.phoneHref}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold tracking-[0.03em] rounded-control transition-all bg-transparent text-white border border-white/70 hover:bg-white/10 hover:border-white no-underline"
+            >
+              <Phone size={16} />
+              <span>Call 01494 766 849</span>
+            </a>
+          </CtaBanner>
         </div>
       </section>
 
@@ -438,18 +417,14 @@ export default function HomePage({ onOpenBooking, showToast }) {
       >
         <div className="absolute inset-0 bg-black/60" />
         <div className="w-full max-w-[1240px] mx-auto px-6 relative z-10 max-w-[800px] flex flex-col items-center">
-          <span className="text-[#e5c788] text-[0.82rem] font-bold tracking-[0.2em] uppercase mb-3">YOUR LITTLE CHALFONT LOCAL</span>
+          <Badge variant="plain" tone="gold" onDark className="mb-3">Your Little Chalfont Local</Badge>
           <h2 className="text-white text-[2.8rem] mb-4 font-bold">Steeped in History, Serving Modern Flavours</h2>
-          <p className="text-white text-[1.1rem] leading-[1.6] max-w-[640px] mx-auto mb-8">
+          <p className="text-white text-lg leading-[1.6] max-w-[640px] mx-auto mb-8">
             Amersham's favourite pub and Indian dining room. Warm fires in winter, a sunny floral garden in summer.
           </p>
-          <button
-            className="inline-flex items-center justify-center gap-2 px-[26px] py-[11px] text-[0.94rem] font-semibold tracking-[0.03em] rounded-[5px] transition-all bg-book-table text-white border border-book-table hover:bg-book-table-hover hover:shadow-[0_4px_14px_rgba(50,65,88,0.4)] hover:-translate-y-[1px] cursor-pointer"
-            onClick={onOpenBooking}
-          >
-            <CalendarCheck size={18} />
-            <span>Book Your Experience</span>
-          </button>
+          <Button variant="navy" icon={CalendarCheck} onClick={onOpenBooking}>
+            Book Your Experience
+          </Button>
         </div>
       </section>
     </main>
