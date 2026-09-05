@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import clsx from 'clsx';
 import { Search, CalendarCheck, Clock, ChevronRight, Flame, Leaf, Wheat, Info, X } from 'lucide-react';
 import { siteData } from '../data/siteData';
 import { menuData, computeToday, ALLERGEN_LEGEND } from '../data/menuData';
 import { useSEO } from '../hooks/useSEO';
+import Button from '../components/Button';
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
 const DIETARY_FILTERS = [
@@ -168,13 +170,9 @@ function TodayTab({ onOpenBooking, onNavigateTab }) {
       </div>
 
       <div className="mt-8 text-center">
-        <button
-          onClick={onOpenBooking}
-          className="inline-flex items-center gap-2 px-[26px] py-[11px] text-[0.94rem] font-semibold rounded-[5px] bg-maroon text-white border border-white/70 hover:bg-maroon-hover hover:border-white hover:-translate-y-[1px] transition-all cursor-pointer shadow-[0_4px_14px_rgba(158,52,56,0.3)]"
-        >
-          <CalendarCheck size={17} />
-          <span>Book a Table</span>
-        </button>
+        <Button variant="primary" icon={CalendarCheck} onClick={onOpenBooking}>
+          Book a Table
+        </Button>
       </div>
     </div>
   );
@@ -231,9 +229,10 @@ function PrivateDiningTab({ filter, query, onOpenBooking }) {
           <button
             key={m.id}
             onClick={() => setMode(m.id)}
-            className={`px-5 py-2 text-[0.9rem] font-semibold rounded-[6px] transition-colors cursor-pointer ${
-              mode === m.id ? 'bg-white text-black shadow-sm' : 'text-[#6b7280] hover:text-black'
-            }`}
+            className={clsx(
+              'px-5 py-2 text-sm font-semibold rounded-control transition-colors cursor-pointer',
+              mode === m.id ? 'bg-white text-black shadow-control' : 'text-[#6b7280] hover:text-black'
+            )}
           >
             {m.label}
           </button>
@@ -281,13 +280,9 @@ function PrivateDiningTab({ filter, query, onOpenBooking }) {
       })}
 
       <div className="mt-10 text-center">
-        <button
-          onClick={onOpenBooking}
-          className="inline-flex items-center gap-2 px-[26px] py-[11px] text-[0.94rem] font-semibold rounded-[5px] bg-maroon text-white border border-white/70 hover:bg-maroon-hover hover:border-white hover:-translate-y-[1px] transition-all cursor-pointer shadow-[0_4px_14px_rgba(158,52,56,0.3)]"
-        >
-          <CalendarCheck size={17} />
-          <span>Enquire About Private Dining</span>
-        </button>
+        <Button variant="primary" icon={CalendarCheck} onClick={onOpenBooking}>
+          Enquire About Private Dining
+        </Button>
       </div>
     </div>
   );
@@ -328,24 +323,29 @@ export default function MenuPage({ onOpenBooking }) {
 
   return (
     <div>
-      {/* Page Header */}
-      <section className="bg-dark-navy text-white py-14 px-6 text-center relative border-b border-black overflow-hidden">
+      {/* Page Header — the live kitchen-status pill is this page's one
+          genuinely distinctive feature, so it leads instead of sitting
+          below a generic "Handcrafted with Passion" kicker (which also
+          repeated the failing maroon-on-dark-navy contrast pattern
+          found elsewhere on this page's original badge). */}
+      <section className="bg-dark-navy text-white py-10 px-6 text-center relative border-b border-black overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#002e5d]/60 to-[#232f3c]/90" />
         <div className="w-full max-w-[1240px] mx-auto relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-[14px] py-[5px] text-[0.76rem] font-bold tracking-[0.08em] uppercase rounded-full bg-maroon/10 text-maroon border border-maroon/30 mb-3">
-            Handcrafted with Passion
-          </span>
+          <div className={clsx(
+            'inline-flex items-center gap-2 mb-4 px-4 py-1.5 rounded-full text-sm font-semibold',
+            today.kitchenOpen
+              ? 'bg-[#22c55e]/20 text-[#bbf7d0] border border-[#22c55e]/30'
+              : 'bg-[#ef4444]/20 text-[#fecaca] border border-[#ef4444]/30'
+          )}>
+            <span className={clsx('w-2 h-2 rounded-full', today.kitchenOpen ? 'bg-[#22c55e]' : 'bg-[#ef4444]')} />
+            {today.kitchenOpen ? `Kitchen open now · closes ${today.closesAt}` : `Kitchen closed · opens ${today.opensAt}`}
+          </div>
           <h1 className="text-white text-[clamp(2.4rem,4.5vw,3.2rem)] font-bold mb-3 drop-shadow-md tracking-[-0.015em]">
             Food &amp; Drink at The White Lion
           </h1>
-          <p className="text-[#cbd5e1] text-[1.05rem] max-w-[680px] mx-auto leading-[1.6]">
+          <p className="text-[#cbd5e1] text-lg max-w-[680px] mx-auto leading-[1.6]">
             Authentic Indian cuisine and traditional British pub classics — all under one roof in Amersham.
           </p>
-          {/* Live status pill */}
-          <div className={`inline-flex items-center gap-2 mt-4 px-4 py-1.5 rounded-full text-[0.8rem] font-semibold ${today.kitchenOpen ? 'bg-[#22c55e]/20 text-[#bbf7d0] border border-[#22c55e]/30' : 'bg-[#ef4444]/20 text-[#fecaca] border border-[#ef4444]/30'}`}>
-            <span className={`w-2 h-2 rounded-full ${today.kitchenOpen ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`} />
-            {today.kitchenOpen ? `Kitchen open now · closes ${today.closesAt}` : `Kitchen closed · opens ${today.opensAt}`}
-          </div>
         </div>
       </section>
 
@@ -356,11 +356,12 @@ export default function MenuPage({ onOpenBooking }) {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`inline-flex items-center gap-1.5 px-4 py-2 text-[0.88rem] font-semibold rounded-full cursor-pointer transition-all border ${
+              className={clsx(
+                'inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full cursor-pointer transition-all border',
                 activeTab === tab.id
-                  ? 'bg-navy-800 text-white border-navy-800 shadow-md'
+                  ? 'bg-navy-800 text-white border-navy-800 shadow-control'
                   : 'bg-white text-[#555e69] border-[#d1d5db] hover:bg-[#f3f4f6] hover:text-black'
-              }`}
+              )}
               aria-current={activeTab === tab.id ? 'page' : undefined}
             >
               <span>{tab.emoji}</span>
@@ -390,11 +391,12 @@ export default function MenuPage({ onOpenBooking }) {
                   key={f.id}
                   onClick={() => setFilter(f.id)}
                   aria-pressed={filter === f.id}
-                  className={`px-[14px] py-[6px] text-[0.84rem] font-semibold rounded-[5px] transition-all border cursor-pointer ${
+                  className={clsx(
+                    'px-3.5 py-1.5 text-sm font-semibold rounded-control transition-all border cursor-pointer',
                     filter === f.id
-                      ? 'bg-book-table text-white border-book-table shadow-sm'
+                      ? 'bg-book-table text-white border-book-table shadow-control'
                       : 'bg-transparent text-black border-black/30 hover:bg-black hover:text-white'
-                  }`}
+                  )}
                 >
                   {f.label}
                 </button>
@@ -440,20 +442,11 @@ export default function MenuPage({ onOpenBooking }) {
         {/* Allergen legend accordion (all tabs except Today) */}
         {activeTab !== 'today' && <AllergenLegend />}
 
-        {/* Book CTA strip */}
-        <div className="mt-14 bg-gradient-to-br from-[#172534] to-[#232f3c] rounded-[12px] p-8 text-white flex items-center justify-between gap-6 flex-wrap shadow-lg">
-          <div>
-            <h2 className="text-[1.5rem] font-bold mb-1">Like what you see?</h2>
-            <p className="text-[#cbd5e1] text-[0.95rem]">Secure your table online in under 60 seconds.</p>
-          </div>
-          <button
-            onClick={onOpenBooking}
-            className="inline-flex items-center gap-2 px-[26px] py-[13px] text-[0.95rem] font-semibold rounded-[5px] bg-maroon text-white border border-white/70 hover:bg-maroon-hover hover:border-white hover:-translate-y-[1px] transition-all cursor-pointer shadow-[0_4px_14px_rgba(158,52,56,0.4)] whitespace-nowrap"
-          >
-            <CalendarCheck size={18} />
-            <span>Book a Table</span>
-          </button>
-        </div>
+        {/* No bottom CTA banner here — this page already leads with a
+            live "book a table" path (Today tab) and booking is one click
+            away from every tab via the sticky Navbar/TopBar, so a third
+            copy of the site-wide gradient CTA box would be redundant
+            chrome, not a missing conversion path. */}
       </div>
     </div>
   );
