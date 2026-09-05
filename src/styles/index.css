@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+/* Google Fonts are loaded via <link rel="stylesheet"> in index.html —
+   an @import here would follow Tailwind's expanded @layer rules and be
+   invalid CSS (browsers require @import to precede all other rules). */
+
+@theme {
+  /* ── Neutral ─────────────────────────────────────────────────────────── */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-off-white: #fafafa;
+  --color-warm-cream: #fffcf5;
+  --color-cream-subtle: #f8f6f0;
+
+  /* ── Navy scale (3-step canonical, replacing 5 ad-hoc near-duplicates)
+       navy-900: darkest — footer panels, deepest backgrounds
+       navy-700: mid    — secondary section backgrounds, dividers
+       navy-600: action — "Book a Table" primary button, icon line-art
+  ────────────────────────────────────────────────────────────────────────── */
+  --color-navy-900: #1b2530;
+  --color-navy-800: #232f3c;
+  --color-navy-700: #37495d;
+  --color-navy-600: #324158;
+  --color-navy-scrim: rgba(0, 46, 93, 0.86);
+
+  /* Alias tokens kept for backward compat with existing classnames */
+  --color-dark-navy:  var(--color-navy-800);
+  --color-slate-navy: var(--color-navy-700);
+  --color-book-table: var(--color-navy-600);
+  --color-book-table-hover: #263244;
+  --color-navy-header: #244b74;
+
+  /* ── Accent — MAROON (promoted from Christmas-only to year-round primary)
+       Replaces sage green as the CTA accent colour.
+       White text on #9E3438 = 7.00:1 → WCAG AA pass (normal & large text).
+  ────────────────────────────────────────────────────────────────────────── */
+  --color-accent:        #9e3438;
+  --color-accent-hover:  #83292d;
+  --color-accent-light:  rgba(158, 52, 56, 0.1);
+  --color-accent-border: rgba(158, 52, 56, 0.3);
+
+  /* Alias so existing `text-maroon` / `bg-maroon` classes keep working */
+  --color-maroon:        var(--color-accent);
+  --color-maroon-hover:  var(--color-accent-hover);
+
+  /* ── Sage — DEMOTED to decorative / tag / badge use only.
+       NEVER use as a button background with white text (2.43:1 — WCAG fail).
+       Safe uses: background tints, borders, icon fills on white backgrounds.
+  ────────────────────────────────────────────────────────────────────────── */
+  --color-sage:        #8ab089;
+  --color-sage-hover:  #759e74;
+  --color-sage-overlay: rgba(138, 176, 137, 0.68);
+  --color-sage-subtle:  rgba(138, 176, 137, 0.15);
+
+  /* ── Link colour — gives interactive text a colour signal beyond underline
+       Navy #213348 on white = ~11:1 → WCAG AA pass
+  ────────────────────────────────────────────────────────────────────────── */
+  --color-link:       #213348;
+  --color-link-hover: #14202e;
+
+  /* ── Decorative ──────────────────────────────────────────────────────── */
+  --color-divider-teal: #5d8091;
+  --color-gold:         #c5a059;
+
+  /* ── Typography — 2-family system ───────────────────────────────────────
+       font-brand : Noticia Text  — logo wordmark, H1/H2 display
+       font-sans  : Poppins       — nav, body, buttons, captions, footer
+  ────────────────────────────────────────────────────────────────────────── */
+  --font-brand:  "Noticia Text", Georgia, serif;
+  --font-sans:   "Poppins", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Legacy aliases — prevents breakage if any component still refs these */
+  --font-serif:    var(--font-brand);
+  --font-heading:  var(--font-sans);
+}
+
+/* ─── Base layer ───────────────────────────────────────────────────────────── */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-size: 16px;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-black);
+    background-color: var(--color-white);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* Heading system — Noticia Text (brand serif), 1.25 modular scale, base 16px */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-brand);
+    font-weight: 700;
+    color: var(--color-black);
+    line-height: 1.22;
+  }
+
+  h1 {
+    font-size: clamp(2.4rem, 5vw, 4rem);      /* ~40px at desktop */
+    letter-spacing: -0.015em;                   /* Tightened per audit §2 */
+  }
+
+  h2 {
+    font-size: clamp(2rem, 3.8vw, 2.9rem);     /* ~31px at desktop */
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-size: clamp(1.4rem, 2.4vw, 1.9rem);   /* ~25px at desktop */
+  }
+
+  h4 {
+    font-size: 1.25rem;                          /* ~20px */
+  }
+
+  /* Body — minimum 16px, 1.5 line-height (audit confirmed this is correct) */
+  p {
+    font-size: 1rem;
+    color: var(--color-black);
+    line-height: 1.5;
+  }
+
+  /* Captions / small labels — minimum 13px (audit: never below this) */
+  small, .text-caption {
+    font-size: 0.8125rem; /* 13px */
+    line-height: 1.4;
+  }
+
+  /* Body links — colour signal beyond underline-only */
+  a:not([class]) {
+    color: var(--color-link);
+    text-decoration: underline;
+    transition: color 0.15s ease;
+  }
+  a:not([class]):hover {
+    color: var(--color-link-hover);
+  }
+}
