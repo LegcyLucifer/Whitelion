@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Users, Car, Gift, Utensils, Send, CheckCircle, Sparkles, Phone } from 'lucide-react';
+import { Send, CheckCircle, Phone } from 'lucide-react';
 import { siteData } from '../data/siteData';
 import { useSEO } from '../hooks/useSEO';
+import Badge from '../components/Badge';
+import Button from '../components/Button';
 
 export default function PartyVenuePage({ showToast }) {
   const { title, subtitle, desc, stats, packages } = siteData.partyVenue;
@@ -41,42 +43,52 @@ export default function PartyVenuePage({ showToast }) {
 
   return (
     <div>
-      {/* Page Header */}
-      <section className="bg-dark-navy text-white py-16 px-6 text-center shadow-inner relative border-b border-black">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#002e5d]/60 to-[#232f3c]/90" />
+      {/* Page Header — a real venue photo instead of a flat navy gradient,
+          matching the full-bleed photo-hero idiom already used on Home's
+          atmosphere banner rather than the shared centered-block hero. */}
+      <section
+        className="relative py-20 px-6 text-center border-b border-black bg-cover bg-center"
+        style={{ backgroundImage: 'url(/assets/venue_party_1.jpg)' }}
+      >
+        <div className="absolute inset-0 bg-navy-900/78" />
         <div className="w-full max-w-[1240px] mx-auto relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-[14px] py-[5px] text-[0.76rem] font-bold tracking-[0.08em] uppercase rounded-full bg-sage-subtle text-[#4b7349] border border-sage/45 mb-3">
+          <Badge variant="plain" tone="gold" onDark className="mb-3">
             Private Hire & Celebrations
-          </span>
+          </Badge>
           <h1 className="text-white text-[clamp(2.4rem,4.5vw,3.2rem)] font-bold mb-4 drop-shadow-md">{title}</h1>
-          <p className="text-[#cbd5e1] text-[1.1rem] max-w-[700px] mx-auto leading-[1.6]">
+          <p className="text-[#cbd5e1] text-lg max-w-[700px] mx-auto leading-[1.6]">
             {subtitle} — {desc}
           </p>
         </div>
       </section>
 
       <div className="w-full max-w-[1240px] mx-auto px-6 py-[60px] pb-20">
-        {/* 4 Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-[60px]">
+        {/* Quick-fact stat strip — no card chrome, so these amenity facts
+            stay visually subordinate to the Packages grid below, which is
+            the section that actually drives a decision. */}
+        <div className="flex flex-wrap justify-center gap-y-6 py-6 mb-[60px] border-y border-[#e5e7eb]">
           {stats.map((s, idx) => (
             <div
               key={idx}
-              className="bg-white border border-[#e5e7eb] rounded-[12px] p-7 px-5 text-center shadow-sm transition-transform duration-250 hover:-translate-y-1 hover:shadow-md"
+              className={`flex-1 min-w-[150px] text-center px-6 ${idx > 0 ? 'border-l border-[#e5e7eb]' : ''}`}
             >
-              <div className="text-[1.75rem] font-serif font-bold text-[#4b7349] mb-1.5">
+              <div className="text-2xl font-brand font-bold text-[#4b7349] mb-1">
                 {s.value}
               </div>
-              <div className="text-[0.9rem] text-[#656b73] font-semibold">
+              <div className="text-xs uppercase tracking-[0.08em] text-[#656b73] font-semibold">
                 {s.label}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Packages Grid */}
+        {/* Packages Grid — heavier weight (larger padding/type) than the
+            stat strip above, and a numbered editorial treatment instead
+            of the icon-in-tinted-circle formula reused on Home/Contact/
+            Christmas. */}
         <div className="mb-[60px]">
           <div className="text-center max-w-[640px] mx-auto mb-9">
-            <span className="inline-flex items-center gap-1.5 px-[14px] py-[5px] text-[0.76rem] font-bold tracking-[0.08em] uppercase rounded-full bg-[#5d8091]/15 text-divider-teal border border-[#5d8091]/35 mb-2">
+            <span className="block text-xs font-bold tracking-[0.2em] uppercase text-slate-navy mb-2">
               Catering Options
             </span>
             <h2 className="text-[2.2rem] mb-2 font-bold font-serif text-black">Pre-Bookable Event Packages</h2>
@@ -89,13 +101,13 @@ export default function PartyVenuePage({ showToast }) {
             {packages.map((pkg, idx) => (
               <div
                 key={idx}
-                className="bg-white border border-[#edf0f2] rounded-[12px] p-8 px-6 shadow-sm flex flex-col transition-all hover:border-sage hover:shadow-md group"
+                className="bg-white border border-[#edf0f2] rounded-card p-10 shadow-sm flex flex-col transition-shadow hover:shadow-md"
               >
-                <div className="w-12 h-12 rounded-[8px] bg-sage-subtle text-[#4b7349] flex items-center justify-center mb-4.5 transition-transform group-hover:scale-110">
-                  <Utensils size={24} />
-                </div>
-                <h3 className="text-[1.45rem] mb-2.5 font-bold text-black">{pkg.title}</h3>
-                <p className="text-[#555e69] text-[0.92rem] leading-[1.6] flex-1">{pkg.desc}</p>
+                <span className="font-brand text-4xl text-maroon/25 font-bold mb-3">
+                  {String(idx + 1).padStart(2, '0')}
+                </span>
+                <h3 className="text-2xl mb-3 font-bold text-black">{pkg.title}</h3>
+                <p className="text-[#555e69] text-base leading-[1.7] flex-1">{pkg.desc}</p>
               </div>
             ))}
           </div>
@@ -220,13 +232,9 @@ export default function PartyVenuePage({ showToast }) {
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  aria-label="Send party venue enquiry"
-                  className="w-full mt-2 inline-flex items-center justify-center gap-2 px-6 py-3 bg-maroon text-white rounded-[5px] text-[0.94rem] font-semibold tracking-[0.03em] cursor-pointer transition-all border border-white/70 shadow-[0_4px_14px_rgba(158,52,56,0.35)] hover:bg-maroon-hover hover:border-white hover:-translate-y-[1px]">
-                  <Send size={16} />
-                  <span>Send Venue Enquiry</span>
-                </button>
+                <Button type="submit" aria-label="Send party venue enquiry" className="w-full mt-2" icon={Send}>
+                  Send Venue Enquiry
+                </Button>
               </form>
             ) : (
               <div className="text-center py-7 px-2.5">
@@ -235,12 +243,9 @@ export default function PartyVenuePage({ showToast }) {
                 <p className="text-[#4b5563] mb-5 text-base">
                   Thank you, <strong>{formData.name}</strong>. Our events manager will review your date and requirements and reach out via phone/email within 24 hours.
                 </p>
-                <button
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-[0.86rem] font-semibold tracking-[0.03em] rounded-[5px] transition-all bg-maroon text-white border border-white/70 shadow-[0_4px_14px_rgba(158,52,56,0.35)] hover:bg-maroon-hover hover:border-white hover:-translate-y-[1px] cursor-pointer"
-                  onClick={() => setSubmitted(false)}
-                >
+                <Button size="sm" onClick={() => setSubmitted(false)}>
                   Submit Another Enquiry
-                </button>
+                </Button>
               </div>
             )}
           </div>

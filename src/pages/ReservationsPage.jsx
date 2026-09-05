@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, Clock, Users, MapPin, Phone, CheckCircle, Sparkles } from 'lucide-react';
 import { siteData } from '../data/siteData';
 import { useSEO } from '../hooks/useSEO';
+import Badge from '../components/Badge';
 
 export default function ReservationsPage({ showToast }) {
   useSEO({
@@ -44,19 +45,12 @@ export default function ReservationsPage({ showToast }) {
 
   return (
     <div>
-      {/* Page Header */}
-      <section className="bg-dark-navy text-white py-16 px-6 text-center shadow-inner relative border-b border-black">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#002e5d]/60 to-[#232f3c]/90" />
-        <div className="w-full max-w-[1240px] mx-auto relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-[14px] py-[5px] text-[0.76rem] font-bold tracking-[0.08em] uppercase rounded-full bg-sage-subtle text-[#4b7349] border border-sage/45 mb-3">
-            Online Booking System
-          </span>
-          <h1 className="text-white text-[clamp(2.4rem,4.5vw,3.2rem)] font-bold mb-4 drop-shadow-md">Make a Reservation</h1>
-          <p className="text-[#cbd5e1] text-[1.1rem] max-w-[700px] mx-auto leading-[1.6]">
-            Select your details and we'll try to get the best seats for you. For instant confirmation,
-            book online or give our friendly team a call.
-          </p>
-        </div>
+      {/* Page Header — collapsed to a minimal strip. The old full hero
+          (badge + h1 + paragraph) said "Make a Reservation" and then the
+          form card immediately below said "Book Your Table" seconds
+          later; this gets to the form faster instead of repeating itself. */}
+      <section className="bg-dark-navy text-white py-6 px-6 text-center border-b border-black">
+        <h1 className="text-white text-2xl md:text-[1.75rem] font-bold">Make a Reservation</h1>
       </section>
 
       <div className="w-full max-w-[1240px] mx-auto px-6 py-[40px] pb-[80px]">
@@ -267,19 +261,19 @@ export default function ReservationsPage({ showToast }) {
           {/* Right Side: Direct Call & Real Ambiance Gallery */}
           <div className="flex flex-col gap-7">
             {/* Direct Call Card */}
-            <div className="bg-[#121517] rounded-[8px] p-8 text-white border border-white/10">
-              <span className="inline-flex items-center gap-1.5 px-[14px] py-[5px] text-[0.76rem] font-bold tracking-[0.08em] uppercase rounded-full bg-[#c5a059]/15 text-[#e5c788] border border-[#c5a059]/40 mb-3.5">
+            <div className="bg-[#121517] rounded-card p-8 text-white border border-white/10">
+              <Badge variant="plain" tone="gold" onDark className="mb-3.5">
                 Direct Assistance
-              </span>
+              </Badge>
               <h3 className="text-white text-[1.6rem] mb-2.5 font-bold">
                 Prefer to just give us a call?
               </h3>
-              <p className="text-[#cbd5e1] text-[0.95rem] leading-[1.6] mb-5">
+              <p className="text-[#cbd5e1] text-sm leading-[1.6] mb-5">
                 If you have a complex reservation, a larger group (over 15 people), or would just prefer to speak directly with our team at The White Lion, feel free to give us a call.
               </p>
               <a
                 href={siteData.info.phoneHref}
-                className="w-full inline-flex items-center justify-center gap-2 px-[26px] py-[11px] text-[0.94rem] font-semibold tracking-[0.03em] rounded-[5px] transition-all bg-maroon text-white border border-white/70 shadow-[0_4px_14px_rgba(158,52,56,0.35)] hover:bg-maroon-hover hover:border-white hover:-translate-y-[1px] cursor-pointer no-underline"
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold tracking-[0.03em] rounded-control transition-all bg-maroon text-white border border-white/70 shadow-control hover:bg-maroon-hover hover:border-white hover:-translate-y-px no-underline"
               >
                 <Phone size={16} />
                 <span>Call 01494 766 849</span>
