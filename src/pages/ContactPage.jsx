@@ -31,61 +31,64 @@ export default function ContactPage({ showToast }) {
 
   return (
     <div>
-      {/* Page Header */}
-      <section className="bg-dark-navy text-white py-16 px-6 text-center shadow-inner relative border-b border-black">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#002e5d]/60 to-[#232f3c]/90" />
-        <div className="w-full max-w-[1240px] mx-auto relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-[14px] py-[5px] text-[0.76rem] font-bold tracking-[0.08em] uppercase rounded-full bg-sage-subtle text-[#4b7349] border border-sage/45 mb-3">
-            We'd Love To Hear From You
-          </span>
-          <h1 className="text-white text-[clamp(2.4rem,4.5vw,3.2rem)] font-bold mb-4 drop-shadow-md">Contact Us</h1>
-          <p className="text-[#cbd5e1] text-[1.1rem] max-w-[700px] mx-auto leading-[1.6]">
+      {/* No full hero here -- a utility page like this doesn't need a
+          sixth copy of the navy-gradient block. A simple in-flow title
+          is enough. */}
+      <div className="w-full max-w-[1240px] mx-auto px-6 pt-12 pb-20">
+        <div className="max-w-[640px] mx-auto text-center mb-12">
+          <h1 className="text-black text-[2.4rem] font-bold mb-3">Contact Us</h1>
+          <p className="text-[#656b73] text-lg leading-[1.6]">
             Have a question, feedback, or need special dining arrangements?
             Get in touch with The White Lion team or visit us in Little Chalfont, Amersham.
           </p>
         </div>
-      </section>
 
-      <div className="w-full max-w-[1240px] mx-auto px-6 py-[60px] pb-20">
-        {/* 3 Contact Cards */}
+        {/* 3 Contact Cards — left-aligned row instead of the centered
+            icon-circle formula reused on Home/Party Venue/Christmas. */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-[60px]">
-          <div className="bg-white border border-[#e5e7eb] rounded-[12px] p-8 text-center shadow-sm flex flex-col items-center">
-            <div className="w-14 h-14 rounded-full bg-sage-subtle text-sage flex items-center justify-center mb-4">
-              <Phone size={26} />
+          <div className="bg-white border border-[#e5e7eb] rounded-card p-6 flex items-start gap-4">
+            <div className="w-11 h-11 rounded-control bg-sage-subtle text-[#4b7349] flex items-center justify-center shrink-0">
+              <Phone size={20} />
             </div>
-            <h3 className="text-[1.35rem] mb-2 font-bold text-black">Phone Us</h3>
-            <p className="text-[#656b73] text-[0.92rem] mb-4 leading-[1.5]">
-              Give us a call during opening hours for reservations or inquiries.
-            </p>
-            <a href={siteData.info.phoneHref} className="text-[#213348] font-bold text-[1.1rem] hover:underline mt-auto">
-              {siteData.info.phone}
-            </a>
+            <div>
+              <h3 className="text-lg mb-1 font-bold text-black">Phone Us</h3>
+              <p className="text-[#656b73] text-sm mb-2 leading-[1.5]">
+                Give us a call during opening hours for reservations or inquiries.
+              </p>
+              <a href={siteData.info.phoneHref} className="text-[#213348] font-bold text-base hover:underline">
+                {siteData.info.phone}
+              </a>
+            </div>
           </div>
 
-          <div className="bg-white border border-[#e5e7eb] rounded-[12px] p-8 text-center shadow-sm flex flex-col items-center">
-            <div className="w-14 h-14 rounded-full bg-sage-subtle text-sage flex items-center justify-center mb-4">
-              <Mail size={26} />
+          <div className="bg-white border border-[#e5e7eb] rounded-card p-6 flex items-start gap-4">
+            <div className="w-11 h-11 rounded-control bg-sage-subtle text-[#4b7349] flex items-center justify-center shrink-0">
+              <Mail size={20} />
             </div>
-            <h3 className="text-[1.35rem] mb-2 font-bold text-black">Email Us</h3>
-            <p className="text-[#656b73] text-[0.92rem] mb-4 leading-[1.5]">
-              Send us an email for general inquiries, feedback, or private events.
-            </p>
-            <a href={`mailto:${siteData.info.email}`} className="text-[#213348] font-bold text-[0.95rem] break-all hover:underline mt-auto">
-              {siteData.info.email}
-            </a>
+            <div>
+              <h3 className="text-lg mb-1 font-bold text-black">Email Us</h3>
+              <p className="text-[#656b73] text-sm mb-2 leading-[1.5]">
+                Send us an email for general inquiries, feedback, or private events.
+              </p>
+              <a href={`mailto:${siteData.info.email}`} className="text-[#213348] font-bold text-sm break-all hover:underline">
+                {siteData.info.email}
+              </a>
+            </div>
           </div>
 
-          <div className="bg-white border border-[#e5e7eb] rounded-[12px] p-8 text-center shadow-sm flex flex-col items-center">
-            <div className="w-14 h-14 rounded-full bg-sage-subtle text-sage flex items-center justify-center mb-4">
-              <MapPin size={26} />
+          <div className="bg-white border border-[#e5e7eb] rounded-card p-6 flex items-start gap-4">
+            <div className="w-11 h-11 rounded-control bg-sage-subtle text-[#4b7349] flex items-center justify-center shrink-0">
+              <MapPin size={20} />
             </div>
-            <h3 className="text-[1.35rem] mb-2 font-bold text-black">Location</h3>
-            <p className="text-[#656b73] text-[0.92rem] mb-4 leading-[1.5]">
-              {siteData.info.address}
-            </p>
-            <a href={siteData.info.mapsUrl} target="_blank" rel="noopener noreferrer" className="text-[#213348] font-bold text-[0.95rem] hover:underline mt-auto">
-              Open in Google Maps →
-            </a>
+            <div>
+              <h3 className="text-lg mb-1 font-bold text-black">Location</h3>
+              <p className="text-[#656b73] text-sm mb-2 leading-[1.5]">
+                {siteData.info.address}
+              </p>
+              <a href={siteData.info.mapsUrl} target="_blank" rel="noopener noreferrer" className="text-[#213348] font-bold text-sm hover:underline">
+                Open in Google Maps →
+              </a>
+            </div>
           </div>
         </div>
 
