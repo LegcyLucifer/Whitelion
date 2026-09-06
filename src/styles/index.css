@@ -5,95 +5,204 @@
    invalid CSS (browsers require @import to precede all other rules). */
 
 @theme {
-  /* ── Neutral ─────────────────────────────────────────────────────────── */
+  /* ── Neutral (warm-tinted scale — H42°/S18%, echoes warm-cream rather
+       than reusing stock Tailwind cool-grays. Consolidates every ad-hoc
+       #e5e7eb / #9ca3af / #6b7280 / #4b5563 / #374151 / #656b73 / #555e69
+       / #f0f0f0 / #f3f4f6 / #eee8dc / #e7e0d3 / #c9c2b4 that had
+       accumulated across pages into one 11-step ramp.
+  ────────────────────────────────────────────────────────────────────────── */
   --color-white: #ffffff;
   --color-black: #000000;
   --color-off-white: #fafafa;
   --color-warm-cream: #fffcf5;
   --color-cream-subtle: #f8f6f0;
 
-  /* ── Navy scale (3-step canonical, replacing 5 ad-hoc near-duplicates)
-       navy-900: darkest — footer panels, deepest backgrounds
-       navy-700: mid    — secondary section backgrounds, dividers
-       navy-600: action — "Book a Table" primary button, icon line-art
-  ────────────────────────────────────────────────────────────────────────── */
-  --color-navy-900: #1b2530;
-  --color-navy-800: #232f3c;
-  --color-navy-700: #37495d;
-  --color-navy-600: #324158;
-  --color-navy-scrim: rgba(0, 46, 93, 0.86);
+  --color-neutral-50:  #faf9f7;
+  --color-neutral-100: #f2f1ed;
+  --color-neutral-200: #e6e3db;
+  --color-neutral-300: #d1cbbd;
+  --color-neutral-400: #b4aa93;
+  --color-neutral-500: #968969; /* 3.45:1 on white — large text / UI components only */
+  --color-neutral-600: #786d54; /* 5.10:1 on white — body-safe secondary text */
+  --color-neutral-700: #5d5541; /* 7.39:1 on white — stronger secondary text */
+  --color-neutral-800: #423c2e;
+  --color-neutral-900: #2d291f;
 
-  /* Alias tokens kept for backward compat with existing classnames */
+  /* ── Navy — the ONE brand colour, re-anchored to navy-700 = #2E3D4E per
+       the formal palette spec. Single hue (212°) and saturation (26%),
+       lightness-only ramp — every step below shares the anchor's exact
+       hue/sat, varying only in lightness, so this reads as one deliberate
+       tonal scale rather than colours picked by eye per section.
+  ────────────────────────────────────────────────────────────────────────── */
+  --color-navy-950: #0f141a;
+  --color-navy-900: #181f28;
+  --color-navy-800: #212c38; /* header / brand bar background */
+  --color-navy-700: #2e3d4e; /* anchor — secondary structural surface, dividers */
+  --color-navy-600: #384a5f; /* sticky nav bar, tertiary panels */
+  --color-navy-500: #475e78; /* body links, mid-emphasis text on white */
+  --color-navy-400: #597697; /* placeholder/disabled-adjacent text — large text/UI only */
+  --color-navy-300: #859cb7;
+  --color-navy-200: #b5c3d4;
+  --color-navy-100: #e5eaf0; /* tint bg on WHITE surfaces only — 1.13:1 vs cream, unusable there */
+  --color-navy-50:  #f2f5f7;
+  --color-navy-scrim: rgba(15, 20, 26, 0.86);
+
+  /* Alias tokens kept for backward compat with existing classnames — all
+     repointed onto the single navy ramp above, so `bg-navy-header` and
+     `bg-book-table` still resolve to the one brand navy. */
   --color-dark-navy:  var(--color-navy-800);
   --color-slate-navy: var(--color-navy-700);
-  --color-book-table: var(--color-navy-600);
-  --color-book-table-hover: #263244;
-  --color-navy-header: #244b74;
+  --color-book-table: var(--color-navy-800);
+  --color-book-table-hover: var(--color-navy-900);
+  --color-navy-header: var(--color-navy-800);
 
-  /* ── Accent — MAROON (promoted from Christmas-only to year-round primary)
-       Replaces sage green as the CTA accent colour.
-       White text on #9E3438 = 7.00:1 → WCAG AA pass (normal & large text).
+  /* ── Accent — PEACOCK TEAL. Replaces copper at the client's request: the
+       brief was "green or a complementing variant," but plain green was
+       already spoken for (it's the vegetarian/vegan tag colour throughout
+       the menu — reusing it as the brand accent would make every green
+       element ambiguous). Teal answers the brief literally — a blue-green,
+       rotated far enough toward blue to dodge that collision — while
+       carrying a genuine cultural fit: peacock imagery in Indian design
+       traditions, and deep teal/bottle-green tones on traditional British
+       pub frontages. Every existing `bg-maroon`/`text-maroon` class was
+       already the "accent" alias from the copper migration, so only the
+       values below changed — no component needed touching.
+       White text on #206562 = 6.78:1 → WCAG AA pass (normal & large text).
   ────────────────────────────────────────────────────────────────────────── */
-  --color-accent:        #9e3438;
-  --color-accent-hover:  #83292d;
-  --color-accent-light:  rgba(158, 52, 56, 0.1);
-  --color-accent-border: rgba(158, 52, 56, 0.3);
+  --color-accent:        #206562;
+  --color-accent-hover:  #184e4c;
+  --color-accent-active: #103c3b; /* pressed state / text-on-tint use */
+  --color-accent-light:  rgba(32, 101, 98, 0.1);
+  --color-accent-border: rgba(32, 101, 98, 0.3);
+  --color-accent-tint:      #e7f3f3; /* light bg for callouts, paired with accent-active text */
+  --color-accent-tint-dark: #aee0de; /* ~9.8:1 on navy-800 — accent-hue text/badges on dark */
 
   /* Alias so existing `text-maroon` / `bg-maroon` classes keep working */
   --color-maroon:        var(--color-accent);
   --color-maroon-hover:  var(--color-accent-hover);
 
-  /* ── Sage — DEMOTED to decorative / tag / badge use only.
-       NEVER use as a button background with white text (2.43:1 — WCAG fail).
-       Safe uses: background tints, borders, icon fills on white backgrounds.
+  /* ── Link colour — reuses navy-700 rather than a separate hue, so body
+       links read as "the structural colour," not a fourth brand colour.
+       navy-700 on white = 11.09:1 → WCAG AA pass
   ────────────────────────────────────────────────────────────────────────── */
-  --color-sage:        #8ab089;
-  --color-sage-hover:  #759e74;
-  --color-sage-overlay: rgba(138, 176, 137, 0.68);
-  --color-sage-subtle:  rgba(138, 176, 137, 0.15);
+  --color-link:       var(--color-navy-700);
+  --color-link-hover: var(--color-navy-900);
 
-  /* ── Link colour — gives interactive text a colour signal beyond underline
-       Navy #213348 on white = ~11:1 → WCAG AA pass
+  /* ── Gold — reserved for one meaning: "notable/seasonal," never a
+       decorative fourth brand colour. Two text-safe tints, not one raw
+       fill reused everywhere: the original single gold value failed
+       contrast at small/bold text sizes (4.42:1, below the 4.5:1 normal-
+       text minimum) — `gold-text` is the corrected token for that role,
+       same hue/sat, just dark enough to actually pass.
   ────────────────────────────────────────────────────────────────────────── */
-  --color-link:       #213348;
-  --color-link-hover: #14202e;
+  --color-gold:             #8a6d2f; /* decorative only — motif bands, icon strokes, large ornament */
+  --color-gold-text-light:  #725a27; /* 5.93:1 on white/gold-tint — gold-family text on light bg */
+  --color-gold-text-dark:   #e6d3a8; /* ~9.6:1 on navy-800 — gold-family text on dark bg */
 
-  /* ── Decorative ──────────────────────────────────────────────────────── */
-  --color-divider-teal: #5d8091;
-  --color-gold:         #c5a059;
+  /* ── Semantic — "closed" stays neutral, not part of the saturated set.
+       This is independent of which colour is the accent: "kitchen closed"
+       isn't an alarm state, just an absence of one, so it gets a neutral
+       dot plus an icon and a text label rather than a saturated colour —
+       true whether the accent is copper or teal.
+  ────────────────────────────────────────────────────────────────────────── */
+  --color-caution:            var(--color-neutral-600); /* 5.10:1 on white — "closed," no alarm colour needed */
+  --color-caution-tint-dark:  var(--color-neutral-300);  /* 10.20:1 on navy-900 — badge text on dark */
+  --color-caution-bg-light:   rgba(120, 109, 84, 0.14);
+
+  /* ── Full semantic set — success/error/warning/info. Previously only
+       success+caution existed; warning and info were entirely undefined
+       (the original audit's own finding). `success` deliberately reuses
+       the site's already-established vegetarian/vegan tag green rather
+       than adding a seventh colour to track — both are "positive" signals.
+       `error` now sits ~172° from `accent` (teal) — as close to opposite
+       on the wheel as this palette gets — so a form error can never read
+       as "just the theme," which the old maroon-accent system risked.
+  ────────────────────────────────────────────────────────────────────────── */
+  --color-success:            #2f6b3a; /* 5.98:1 on cream */
+  --color-success-tint-dark:  #b8e0bf; /* 11.4:1 on navy-900 — badge text on dark */
+  --color-success-bg-light:   rgba(47, 107, 58, 0.1);
+
+  --color-error:            #c0392b; /* 5.09:1 on cream */
+  --color-error-bg-light:   rgba(192, 57, 43, 0.08);
+
+  --color-warning-bg:   #f5c344; /* pair with an icon — never place white text on this */
+  --color-warning-text: #7a5b00; /* 3.84:1 on warning-bg — large text/UI only, not body copy */
+
+  --color-info:           #2b6cb0; /* 5.07:1 on cream */
+  --color-info-bg-light:  rgba(43, 108, 176, 0.08);
 
   /* Shared focus-ring colour — every interactive element uses this, never
-     the browser default outline (which `focus:outline-none` disables). */
-  --color-focus-ring: #244b74;
+     the browser default outline (which `focus:outline-none` disables).
+     Deliberately still navy, not the new teal accent: accent-on-navy-800
+     measures only 2.09:1 (fails the 3:1 UI-component minimum) — a teal
+     ring would be nearly invisible on the site's own header/drawer/footer
+     chrome, exactly the bug this two-tone ring exists to prevent. */
+  --color-focus-ring: var(--color-navy-700);
+
+  /* ── Muted/secondary text — two roles, not one grey reused everywhere.
+       Now drawn from the disciplined ramps above instead of stray hexes,
+       so "muted text" is a shade of the site's own brand/neutral colours
+       rather than a generic grey unrelated to anything else on the page.
+  ────────────────────────────────────────────────────────────────────────── */
+  --color-text-muted:         var(--color-neutral-600); /* secondary text on white/warm-cream — 5.10:1 */
+  --color-text-muted-on-dark: var(--color-navy-300);    /* secondary text on navy-800/900 — 5.90-7.15:1 */
 
   /* ── Typography — 2-family system ───────────────────────────────────────
-       font-brand : Noticia Text  — logo wordmark, H1/H2 display
-       font-sans  : Poppins       — nav, body, buttons, captions, footer
+       font-brand : Fraunces        — wordmark, headings, italic labels.
+                    An old-style serif built around early-20th-century
+                    "wonky" letterforms — chosen for heritage character,
+                    not because it was the safe default.
+       font-sans  : Libre Franklin  — nav, body, buttons, captions, footer.
+                    A modernised Franklin Gothic — real newsprint/ledger
+                    lineage, matching the chalkboard/noticeboard/
+                    letterpress motifs already used across the site.
   ────────────────────────────────────────────────────────────────────────── */
-  --font-brand:  "Noticia Text", Georgia, serif;
-  --font-sans:   "Poppins", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-brand:  "Fraunces", Georgia, serif;
+  --font-sans:   "Libre Franklin", -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Legacy aliases — prevents breakage if any component still refs these */
   --font-serif:    var(--font-brand);
   --font-heading:  var(--font-sans);
 
   /* ── Type scale — small end floored at 13px per the caption rule below.
-       Replaces the scattered text-[0.72rem]/[0.76rem]/[0.78rem] one-offs
-       (several of which sat under the site's own documented 13px floor).
+       Full ramp now: an audit of every page turned up 132 one-off
+       `text-[Nrem]` values — six near-duplicate sizes between 14-17px
+       alone were all doing the same "secondary/lead text" job, and
+       another dozen between 20-45px were all standing in for a card or
+       section title that should have shared one size. Consolidated onto
+       this ramp; each step has a real, singular job.
   ────────────────────────────────────────────────────────────────────────── */
-  --text-xs: 0.8125rem;   /* 13px — badges, meta text, table cells */
-  --text-sm: 0.875rem;    /* 14px — form labels, nav links, secondary body */
-  --text-lg: 1.125rem;    /* 18px — lead paragraphs, hero subtext */
+  --text-xs:  0.8125rem;  /* 13px — badges, meta text, table cells, captions */
+  --text-sm:  0.875rem;   /* 14px — form labels, nav links, secondary body */
+  --text-md:  0.9375rem;  /* 15px — table/list values, quiet secondary text */
+  --text-lg:  1.125rem;   /* 18px — lead paragraphs, hero subtext */
+  --text-xl:  1.375rem;   /* 22px — small standalone headings (card/modal titles) */
+  --text-2xl: 1.75rem;    /* 28px — section/card titles outside the h1-h4 flow */
+  --text-3xl: 2.25rem;    /* 36px — page-level standalone headings (confirmation screens, utility pages) */
+  --text-4xl: 2.75rem;    /* 44px — the largest non-hero display text */
 
-  /* ── Radius scale — replaces ad hoc rounded-[5px]/[8px]/[12px]/[16px] ──── */
-  --radius-control: 0.375rem; /* 6px  — buttons, inputs, tab pills */
-  --radius-card:    0.625rem; /* 10px — cards, tiles, photo frames */
-  --radius-panel:   1rem;     /* 16px — large dark CTA/feature panels */
+  /* ── Radius scale — ZERO. Soft rounded corners (6/10/16px) were the single
+       biggest "generic SaaS template" tell on the site: Dishoom and Greene
+       King's own pub page both run entirely on sharp rectangles — hairline
+       borders and printed/letterpress edges, not rounded cards. Every
+       button, input, card, and panel now shares one flat corner.
+  ────────────────────────────────────────────────────────────────────────── */
+  --radius-control: 0px;
+  --radius-card:    0px;
+  --radius-panel:   0px;
 
-  /* ── Shadow scale — replaces 8+ hand-written shadow-[...] strings ──────── */
-  --shadow-control: 0 2px 8px rgba(0, 0, 0, 0.15);
-  --shadow-card:    0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-panel:   0 16px 40px rgba(0, 0, 0, 0.22);
+  /* ── Shadow scale — hard "stamp" offsets, not soft blur. A blurred
+       drop-shadow is what makes a rounded card feel like a floating app
+       panel; a flat, zero-blur offset behind a sharp rectangle reads as a
+       printed block or a letterpress registration mark instead — the same
+       device Dishoom uses behind its own "Book a table" buttons. Cards get
+       no shadow at all (a hairline border carries them, same as Dishoom's
+       archival photo frames); only interactive controls and lifted panels
+       get the stamp.
+  ────────────────────────────────────────────────────────────────────────── */
+  --shadow-control: 3px 3px 0 rgba(0, 0, 0, 0.85);
+  --shadow-card:    none;
+  --shadow-panel:   6px 6px 0 rgba(0, 0, 0, 0.75);
 }
 
 /* ─── Base layer ───────────────────────────────────────────────────────────── */
@@ -164,10 +273,38 @@
 
   /* Global keyboard-focus indicator — every component that sets
      `focus:outline-none` (buttons, nav links, form controls) relies on
-     this instead of silently dropping focus visibility. */
+     this instead of silently dropping focus visibility.
+
+     Two-tone ring, not a single flat colour: --color-focus-ring (navy-700)
+     would be nearly invisible on --color-navy-800, the Navbar's own
+     background (now also the header's, since the header and drawer share
+     one brand navy). No flat colour in this palette clears 3:1 against
+     white/cream AND navy-700/800/900 AND the teal accent button fill
+     simultaneously — teal-on-navy-800 measures only 2.09:1 — so the ring
+     is a white band sandwiched between two navy bands instead: white
+     clears ≥7:1 against every dark/coloured background in use, and
+     navy-700 clears ≥11:1 against white/cream — whichever band lands on
+     a matching-toned background, the other one is still clearly visible. */
   :focus-visible {
-    outline: 2px solid var(--color-focus-ring);
-    outline-offset: 2px;
+    outline: 2px solid white;
+    outline-offset: 1px;
+    box-shadow: 0 0 0 5px var(--color-focus-ring);
     border-radius: 2px;
+  }
+
+  /* Respect OS-level reduced-motion preference for every plain-CSS
+     transition/animation on the site. Framer Motion's own animations are
+     already covered by <MotionConfig reducedMotion="user"> in App.jsx —
+     this rule covers everything that isn't Framer Motion: hover/press
+     transitions, and looping @keyframes like animate-pulse (the Menu
+     page's kitchen-status dot runs continuously, not just on interaction,
+     which is exactly what reduced-motion settings exist to suppress). */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

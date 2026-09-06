@@ -1,8 +1,28 @@
-import React, { useState } from 'react';
-import { Phone, Mail, MapPin, Clock, Send, CheckCircle, ExternalLink } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { AnimatePresence, motion, useAnimation } from 'framer-motion';
+import { Phone, Mail, MapPin, Clock, CheckCircle, ExternalLink } from 'lucide-react';
 import Button from '../components/Button';
+import FieldError from '../components/FieldError';
 import { siteData } from '../data/siteData';
 import { useSEO } from '../hooks/useSEO';
+import { fieldCls, labelCls } from '../lib/formStyles';
+import { isValidEmail, isRequired } from '../lib/validation';
+import { shakeAnimation } from '../lib/motion';
+
+// Every key is always present (explicit `undefined` for a passing field,
+// not an absent key) — callers merge this with `{...prev, ...validate()}`,
+// and object spread only ever overwrites keys that actually appear in the
+// source, so an omitted key would leave a fixed field's stale error in
+// place forever.
+function validate(formData) {
+  return {
+    name: isRequired(formData.name) ? undefined : "Please tell us your name.",
+    email: !isRequired(formData.email)
+      ? "We need an email address to reply to you."
+      : !isValidEmail(formData.email) ? "That email address doesn't look right." : undefined,
+    message: isRequired(formData.message) ? undefined : "Let us know what you'd like to say.",
+  };
+}
 
 export default function ContactPage({ showToast }) {
   useSEO({
@@ -18,15 +38,59 @@ export default function ContactPage({ showToast }) {
     subject: '',
     message: ''
   });
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const formControls = useAnimation();
+  const fieldRefs = useRef({});
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    // React 18 StrictMode double-invokes effects in dev: mount, cleanup,
+    // mount again. Without resetting the flag back to true on that second
+    // mount, `isMounted.current` is permanently stuck false after the very
+    // first render in dev — silently breaking the delayed submit callback
+    // below on every use, not just in a real-unmount edge case.
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
+  useEffect(() => {
+    if (!formSent) formControls.start({ opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' } });
+  }, [formSent, formControls]);
+
+  const handleChange = (field) => (e) => {
+    const value = e.target.value;
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (touched[field]) {
+      setErrors((prev) => ({ ...prev, ...validate({ ...formData, [field]: value }) }));
+    }
+  };
+
+  const handleBlur = (field) => () => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    setErrors((prev) => ({ ...prev, ...validate(formData) }));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) {
-      showToast('Please fill in your name, email, and message.');
+    if (isSubmitting) return;
+    const validationErrors = validate(formData);
+    if (Object.values(validationErrors).some(Boolean)) {
+      setErrors(validationErrors);
+      setTouched({ name: true, email: true, message: true });
+      formControls.start(shakeAnimation);
+      const firstInvalid = ['name', 'email', 'message'].find((f) => validationErrors[f]);
+      fieldRefs.current[firstInvalid]?.focus();
+      showToast('Please check the highlighted fields below.', 'error');
       return;
     }
-    setFormSent(true);
-    showToast('Thank you for contacting The White Lion Amersham. We will reply promptly!');
+    setIsSubmitting(true);
+    setTimeout(() => {
+      if (!isMounted.current) return;
+      setIsSubmitting(false);
+      setFormSent(true);
+      showToast('Thank you for contacting The White Lion Amersham. We will reply promptly!');
+    }, 700);
   };
 
   return (
@@ -36,178 +100,212 @@ export default function ContactPage({ showToast }) {
           is enough. */}
       <div className="w-full max-w-[1240px] mx-auto px-6 pt-12 pb-20">
         <div className="max-w-[640px] mx-auto text-center mb-12">
-          <h1 className="text-black text-[2.4rem] font-bold mb-3">Contact Us</h1>
-          <p className="text-[#656b73] text-lg leading-[1.6]">
+          <h1 className="text-black text-3xl font-bold mb-3">Contact Us</h1>
+          <p className="text-text-muted text-lg leading-[1.6]">
             Have a question, feedback, or need special dining arrangements?
             Get in touch with The White Lion team or visit us in Little Chalfont, Amersham.
           </p>
         </div>
 
-        {/* 3 Contact Cards — left-aligned row instead of the centered
-            icon-circle formula reused on Home/Party Venue/Christmas. */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-[60px]">
-          <div className="bg-white border border-[#e5e7eb] rounded-card p-6 flex items-start gap-4">
-            <div className="w-11 h-11 rounded-control bg-sage-subtle text-[#4b7349] flex items-center justify-center shrink-0">
-              <Phone size={20} />
+        {/* 3 Contact Methods — a plain left-aligned row divided by rules,
+            not the icon-in-tinted-square formula reused on Home/Party
+            Venue/Christmas. Icon sits inline with the heading. */}
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-neutral-200 border-y border-neutral-200 mb-[60px]">
+          <div className="p-6 md:pr-8 first:pl-0">
+            <div className="flex items-center gap-2 mb-1.5 text-navy-800">
+              <Phone size={18} />
+              <h3 className="text-lg font-bold text-black">Phone Us</h3>
             </div>
-            <div>
-              <h3 className="text-lg mb-1 font-bold text-black">Phone Us</h3>
-              <p className="text-[#656b73] text-sm mb-2 leading-[1.5]">
-                Give us a call during opening hours for reservations or inquiries.
-              </p>
-              <a href={siteData.info.phoneHref} className="text-[#213348] font-bold text-base hover:underline">
-                {siteData.info.phone}
-              </a>
-            </div>
+            <p className="text-text-muted text-sm mb-2 leading-[1.5]">
+              Give us a call during opening hours for reservations or inquiries.
+            </p>
+            <a href={siteData.info.phoneHref} className="text-navy-700 font-bold text-base hover:underline">
+              {siteData.info.phone}
+            </a>
           </div>
 
-          <div className="bg-white border border-[#e5e7eb] rounded-card p-6 flex items-start gap-4">
-            <div className="w-11 h-11 rounded-control bg-sage-subtle text-[#4b7349] flex items-center justify-center shrink-0">
-              <Mail size={20} />
+          <div className="p-6 md:px-8">
+            <div className="flex items-center gap-2 mb-1.5 text-navy-800">
+              <Mail size={18} />
+              <h3 className="text-lg font-bold text-black">Email Us</h3>
             </div>
-            <div>
-              <h3 className="text-lg mb-1 font-bold text-black">Email Us</h3>
-              <p className="text-[#656b73] text-sm mb-2 leading-[1.5]">
-                Send us an email for general inquiries, feedback, or private events.
-              </p>
-              <a href={`mailto:${siteData.info.email}`} className="text-[#213348] font-bold text-sm break-all hover:underline">
-                {siteData.info.email}
-              </a>
-            </div>
+            <p className="text-text-muted text-sm mb-2 leading-[1.5]">
+              Send us an email for general inquiries, feedback, or private events.
+            </p>
+            <a href={`mailto:${siteData.info.email}`} className="text-navy-700 font-bold text-sm break-all hover:underline">
+              {siteData.info.email}
+            </a>
           </div>
 
-          <div className="bg-white border border-[#e5e7eb] rounded-card p-6 flex items-start gap-4">
-            <div className="w-11 h-11 rounded-control bg-sage-subtle text-[#4b7349] flex items-center justify-center shrink-0">
-              <MapPin size={20} />
+          <div className="p-6 md:pl-8 last:pr-0">
+            <div className="flex items-center gap-2 mb-1.5 text-navy-800">
+              <MapPin size={18} />
+              <h3 className="text-lg font-bold text-black">Location</h3>
             </div>
-            <div>
-              <h3 className="text-lg mb-1 font-bold text-black">Location</h3>
-              <p className="text-[#656b73] text-sm mb-2 leading-[1.5]">
-                {siteData.info.address}
-              </p>
-              <a href={siteData.info.mapsUrl} target="_blank" rel="noopener noreferrer" className="text-[#213348] font-bold text-sm hover:underline">
-                Open in Google Maps →
-              </a>
-            </div>
+            <p className="text-text-muted text-sm mb-1 leading-[1.5]">
+              {siteData.info.address}
+            </p>
+            <p className="text-text-muted text-sm mb-2 leading-[1.5]">
+              {siteData.history.station}
+            </p>
+            <a href={siteData.info.mapsUrl} target="_blank" rel="noopener noreferrer" className="text-navy-700 font-bold text-sm hover:underline">
+              Open in Google Maps →
+            </a>
           </div>
         </div>
 
         {/* Contact Form & Hours Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-12 items-start">
           {/* Contact Form */}
-          <div className="bg-white rounded-[12px] p-8 md:p-10 shadow-[0_10px_30px_rgba(0,0,0,0.06)] border border-black/5">
-            <h3 className="text-[1.8rem] mb-2 font-bold text-black">Send Us a Message</h3>
-            <p className="text-[#656b73] text-[0.95rem] mb-6">
+          <div className="bg-white p-8 md:p-10 border-2 border-black/10">
+            <h3 className="text-2xl mb-2 font-brand font-bold text-black">Send Us a Message</h3>
+            <p className="text-text-muted text-md mb-6">
               We normally respond within 24 hours.
             </p>
 
-            {!formSent ? (
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.88rem] font-semibold text-slate-navy">Your Name *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. David Miller"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-[5px] border border-black/15 bg-off-white text-[0.95rem] font-sans transition-colors focus:outline-none focus:border-book-table focus:bg-white"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[0.88rem] font-semibold text-slate-navy">Email Address *</label>
+            <AnimatePresence mode="wait">
+              {!formSent ? (
+                <motion.form
+                  key="form"
+                  onSubmit={handleSubmit}
+                  animate={formControls}
+                  initial={{ opacity: 0, y: 8 }}
+                  className="flex flex-col gap-5"
+                  noValidate
+                >
+                  <div>
+                    <label className={labelCls}>Your name</label>
                     <input
-                      type="email"
-                      placeholder="e.g. david@example.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-[5px] border border-black/15 bg-off-white text-[0.95rem] font-sans transition-colors focus:outline-none focus:border-book-table focus:bg-white"
+                      ref={(el) => (fieldRefs.current.name = el)}
+                      type="text"
+                      placeholder="e.g. David Miller"
+                      value={formData.name}
+                      onChange={handleChange('name')}
+                      onBlur={handleBlur('name')}
+                      className={fieldCls(touched.name && !!errors.name)}
+                      aria-invalid={touched.name && !!errors.name}
                       required
                     />
+                    <FieldError>{touched.name && errors.name}</FieldError>
                   </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[0.88rem] font-semibold text-slate-navy">Phone Number</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                    <div>
+                      <label className={labelCls}>Email address</label>
+                      <input
+                        ref={(el) => (fieldRefs.current.email = el)}
+                        type="email"
+                        placeholder="e.g. david@example.com"
+                        value={formData.email}
+                        onChange={handleChange('email')}
+                        onBlur={handleBlur('email')}
+                        className={fieldCls(touched.email && !!errors.email)}
+                        aria-invalid={touched.email && !!errors.email}
+                        required
+                      />
+                      <FieldError>{touched.email && errors.email}</FieldError>
+                    </div>
+
+                    <div>
+                      <label className={labelCls}>Phone number</label>
+                      <input
+                        type="tel"
+                        placeholder="e.g. 01494 000000"
+                        value={formData.phone}
+                        onChange={handleChange('phone')}
+                        className={fieldCls(false)}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Subject</label>
                     <input
-                      type="tel"
-                      placeholder="e.g. 01494 000000"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-[5px] border border-black/15 bg-off-white text-[0.95rem] font-sans transition-colors focus:outline-none focus:border-book-table focus:bg-white"
+                      type="text"
+                      placeholder="e.g. Table reservation question, private hire, dietary query"
+                      value={formData.subject}
+                      onChange={handleChange('subject')}
+                      className={fieldCls(false)}
                     />
                   </div>
-                </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.88rem] font-semibold text-slate-navy">Subject</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Table reservation question, private hire, dietary query"
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-[5px] border border-black/15 bg-off-white text-[0.95rem] font-sans transition-colors focus:outline-none focus:border-book-table focus:bg-white"
-                  />
-                </div>
+                  <div>
+                    <label className={labelCls}>Message</label>
+                    <textarea
+                      ref={(el) => (fieldRefs.current.message = el)}
+                      placeholder="How can we help you today?"
+                      value={formData.message}
+                      onChange={handleChange('message')}
+                      onBlur={handleBlur('message')}
+                      className={`${fieldCls(touched.message && !!errors.message)} min-h-[120px] resize-y`}
+                      aria-invalid={touched.message && !!errors.message}
+                      required
+                    />
+                    <FieldError>{touched.message && errors.message}</FieldError>
+                  </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.88rem] font-semibold text-slate-navy">Message *</label>
-                  <textarea
-                    placeholder="How can we help you today?"
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-[5px] border border-black/15 bg-off-white text-[0.95rem] font-sans transition-colors focus:outline-none focus:border-sage focus:bg-white min-h-[120px] resize-y"
-                    required
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  aria-label="Send your message to The White Lion"
-                  className="w-full mt-2"
-                  icon={Send}
+                  <Button
+                    type="submit"
+                    aria-label="Send your message to The White Lion"
+                    className="w-full py-4"
+                    loading={isSubmitting}
+                  >
+                    {isSubmitting ? 'Sending…' : 'Send Message'}
+                  </Button>
+                </motion.form>
+              ) : (
+                <motion.div
+                  key="sent"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  className="text-center py-9 px-2.5"
                 >
-                  <span>Send Message</span>
-                </Button>
-              </form>
-            ) : (
-              <div className="text-center py-9 px-2.5">
-                <CheckCircle size={48} className="text-[#2e7d32] mx-auto mb-4" />
-                <h3 className="text-[1.8rem] mb-2 font-bold text-black">Message Dispatched!</h3>
-                <p className="text-[#4b5563] mb-5 text-base">
-                  Thanks for getting in touch, <strong>{formData.name}</strong>. A member of The White Lion team will get back to you soon.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setFormSent(false);
-                    setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
-                  }}
-                >
-                  Send Another Message
-                </Button>
-              </div>
-            )}
+                  <motion.div
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 18, delay: 0.1 }}
+                    className="inline-flex mb-4"
+                  >
+                    <CheckCircle size={48} className="text-success" />
+                  </motion.div>
+                  <h3 className="text-2xl mb-2 font-bold text-black">Message Dispatched!</h3>
+                  <p className="text-text-muted mb-5 text-base">
+                    Thanks for getting in touch, <strong>{formData.name}</strong>. A member of The White Lion team will get back to you soon.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setFormSent(false);
+                      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+                      setErrors({});
+                      setTouched({});
+                    }}
+                  >
+                    Send Another Message
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Opening & Serving Times Tables + Map */}
           <div className="flex flex-col gap-7">
-            <div className="bg-[#fbf9f5] rounded-[12px] p-7 border border-[#e7e0d3]">
-              <h4 className="text-[1.25rem] mb-4 font-bold text-black flex items-center gap-2">
-                <Clock size={18} className="text-sage" />
+            <div className="bg-neutral-50 p-7 border-2 border-neutral-200">
+              <h4 className="mb-4 font-bold text-black flex items-center gap-2">
+                <Clock size={18} className="text-navy-700" />
                 <span>Operating Schedule</span>
               </h4>
 
               <div className="mb-5">
-                <strong className="text-[0.92rem] text-black block mb-2">
+                <strong className="text-md text-black block mb-2">
                   Pub Opening Hours
                 </strong>
-                <table className="w-full text-left border-collapse text-[0.92rem] text-[#4b5563]">
+                <table className="w-full text-left border-collapse text-md text-text-muted">
                   <tbody>
                     {siteData.openingHours.map((h, i) => (
-                      <tr key={i} className="border-b border-[#e5e7eb] last:border-0">
-                        <td className="py-2.5 pr-4 text-[#4b5563]">{h.days}</td>
+                      <tr key={i} className="border-b border-neutral-200 last:border-0">
+                        <td className="py-2.5 pr-4 text-text-muted">{h.days}</td>
                         <td className="py-2.5 text-black font-semibold">{h.hours}</td>
                       </tr>
                     ))}
@@ -216,14 +314,14 @@ export default function ContactPage({ showToast }) {
               </div>
 
               <div>
-                <strong className="text-[0.92rem] text-black block mb-2">
+                <strong className="text-md text-black block mb-2">
                   Kitchen & Food Service
                 </strong>
-                <table className="w-full text-left border-collapse text-[0.92rem] text-[#4b5563]">
+                <table className="w-full text-left border-collapse text-md text-text-muted">
                   <tbody>
                     {siteData.foodServingHours.map((h, i) => (
-                      <tr key={i} className="border-b border-[#e5e7eb] last:border-0">
-                        <td className="py-2.5 pr-4 text-[#4b5563]">{h.days}</td>
+                      <tr key={i} className="border-b border-neutral-200 last:border-0">
+                        <td className="py-2.5 pr-4 text-text-muted">{h.days}</td>
                         <td className="py-2.5 text-black font-semibold">{h.hours}</td>
                       </tr>
                     ))}
@@ -233,7 +331,7 @@ export default function ContactPage({ showToast }) {
             </div>
 
             {/* Map Pin Box */}
-            <div className="bg-white rounded-[12px] overflow-hidden border border-[#e5e7eb] shadow-sm">
+            <div className="bg-white overflow-hidden border-2 border-neutral-200">
               <iframe
                 title="The White Lion Amersham Map"
                 src="https://maps.google.com/maps?q=White+Lion+Road,+Amersham+HP7+9LJ&t=&z=15&ie=UTF8&iwloc=&output=embed"
@@ -244,14 +342,14 @@ export default function ContactPage({ showToast }) {
                 loading="lazy"
               />
               <div className="p-4 px-5 flex justify-between items-center bg-white">
-                <span className="text-[0.88rem] text-[#656b73]">
+                <span className="text-sm text-text-muted">
                   White Lion Rd, Amersham HP7 9LJ
                 </span>
                 <a
                   href={siteData.info.mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-3 py-1.5 text-[0.8rem] font-semibold tracking-[0.03em] rounded-[5px] transition-all bg-transparent text-black border border-black hover:bg-black hover:text-white cursor-pointer no-underline"
+                  className="inline-flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-semibold tracking-[0.03em] transition-colors bg-transparent text-black border-2 border-black hover:bg-black hover:text-white cursor-pointer no-underline"
                 >
                   <ExternalLink size={14} />
                   <span>Directions</span>

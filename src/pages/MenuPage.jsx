@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import clsx from 'clsx';
-import { Search, CalendarCheck, Clock, ChevronRight, Flame, Leaf, Wheat, Info, X } from 'lucide-react';
+import { Search, CalendarCheck, Clock, ChevronRight, Flame, Info } from 'lucide-react';
 import { siteData } from '../data/siteData';
 import { menuData, computeToday, ALLERGEN_LEGEND } from '../data/menuData';
 import { useSEO } from '../hooks/useSEO';
@@ -9,77 +10,96 @@ import Button from '../components/Button';
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
 const DIETARY_FILTERS = [
   { id: 'all',   label: 'All Items' },
-  { id: 'veg',   label: '🌱 Vegetarian' },
-  { id: 'vegan', label: '🌿 Vegan' },
-  { id: 'gf',    label: '🌾 No gluten listed' },
-  { id: 'spicy', label: '🌶️ Contains chilli' },
+  { id: 'veg',   label: 'Vegetarian' },
+  { id: 'vegan', label: 'Vegan' },
+  { id: 'gf',    label: 'No gluten listed' },
+  { id: 'spicy', label: 'Contains chilli' },
 ];
 
-function TagPill({ tag }) {
-  const lower = tag.toLowerCase();
-  let cls = 'inline-block px-2.5 py-0.5 text-[0.72rem] font-bold tracking-[0.05em] uppercase rounded-[4px] border ';
-  if (lower.includes('vegan'))       cls += 'bg-[#f0fdf4] text-[#166534] border-[#bbf7d0]';
-  else if (lower.includes('vegetarian')) cls += 'bg-[#f0fdf4] text-[#166534] border-[#bbf7d0]';
-  else if (lower.includes('chilli') || lower.includes('spicy')) cls += 'bg-[#fef2f2] text-[#991b1b] border-[#fecaca]';
-  else if (lower.includes('gluten')) cls += 'bg-[#fffbeb] text-[#92400e] border-[#fde68a]';
-  else cls += 'bg-[#f3f4f6] text-[#4b5563] border-[#e5e7eb]';
-  return <span className={cls}>{tag}</span>;
+// Was three copies of the same predicate (SectionBlock, StandardMenuTab,
+// PrivateDiningTab) — one definition now.
+function matchesFilters(dish, filter, query) {
+  const qMatch = !query ||
+    dish.name.toLowerCase().includes(query.toLowerCase()) ||
+    (dish.desc || '').toLowerCase().includes(query.toLowerCase());
+  if (!qMatch) return false;
+  if (filter === 'veg')   return dish.isVeg || dish.isVegan;
+  if (filter === 'vegan') return dish.isVegan;
+  if (filter === 'gf')    return !dish.hasGluten;
+  if (filter === 'spicy') return dish.isChilli;
+  return true;
 }
 
-function DishCard({ dish }) {
+// A menu line, not a card — name and price share a baseline the way they
+// would on a printed menu, dietary tags are a quiet tracked caption rather
+// than a row of coloured pills, and there's no box, shadow, or hover-lift
+// implying these are clickable. Matches the printed-menu convention this
+// page's earlier card-grid treatment (shadow-sm, rounded corners, hover
+// translate) had drifted away from — the rest of the site had already
+// moved off that "SaaS card grid" shape (see Home's highlights strip,
+// Party Venue's numbered packages) but this page hadn't.
+function DishRow({ dish }) {
   return (
-    <div className="bg-white rounded-[8px] p-5 shadow-sm border border-[#f3f4f6] transition-all hover:shadow-md hover:border-[#d1d5db] hover:-translate-y-[2px] flex flex-col h-full">
-      <div className="flex justify-between items-start gap-3 border-b border-dashed border-[#e5e7eb] pb-3 mb-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-            <h3 className="text-[1.05rem] text-slate-navy font-bold m-0 leading-tight">{dish.name}</h3>
-            {dish.isChilli && <Flame size={13} className="text-[#dc2626] shrink-0" title="Contains chilli" />}
-          </div>
-        </div>
-        <span className="text-[1rem] font-bold text-maroon whitespace-nowrap shrink-0">{dish.price}</span>
+    <div className="break-inside-avoid border-b border-dashed border-neutral-200 py-4 first:pt-0 last:border-b-0">
+      {/* flex-wrap + a floor on the name — most dishes have a short single
+          price ("£12.95") that always fits inline, but multi-tier prices
+          ("125ml £4.80 / 175ml £6.20 / 250ml £8.20", or "Pint £4.80 / Half
+          £2.60") are wide enough to squeeze a multi-word name like "House
+          White (VG)" down to near-zero width, wrapping it word-by-word and
+          overlapping the price. The floor keeps the name on one line and
+          lets the price wrap to its own line underneath instead — and the
+          price drops `whitespace-nowrap` AND `shrink-0`. `shrink-0` alone
+          was the real culprit for the overflow: it pins a flex item to its
+          max-content (fully unwrapped) width no matter what `white-space`
+          says, so the long price rendered at its full single-line width
+          and ran off the edge instead of wrapping. Default flex-shrink
+          lets it shrink and wrap at the " / " boundaries when needed,
+          while short single-tier prices ("£12.95") never get close to
+          needing to shrink, so their layout is unaffected. */}
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+        <h3 className="font-brand text-lg font-bold text-black leading-snug flex items-center gap-1.5 min-w-[140px]">
+          <span>{dish.name}</span>
+          {dish.isChilli && <Flame size={13} className="text-maroon/60 shrink-0" title="Contains chilli" />}
+        </h3>
+        <span className="font-brand text-lg font-bold text-maroon">{dish.price}</span>
       </div>
       {dish.desc && (
-        <p className="text-[0.9rem] text-[#656b73] mb-3 flex-1 leading-[1.55]">{dish.desc}</p>
+        <p className="text-sm text-text-muted leading-[1.5] mt-1 pr-2">{dish.desc}</p>
       )}
       {dish.tags && dish.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-auto">
-          {dish.tags.map((t, i) => <TagPill key={i} tag={t} />)}
-        </div>
+        <p className="text-xs font-semibold tracking-[0.09em] uppercase text-navy-700/60 mt-1.5">
+          {dish.tags.join(' · ')}
+        </p>
       )}
       {dish.allergens && dish.allergens.length > 0 && (
-        <p className="text-[0.72rem] text-[#9ca3af] mt-2 leading-[1.4]">
-          Contains: {dish.allergens.join(', ')}
-        </p>
+        <p className="text-xs text-text-muted mt-1">Contains: {dish.allergens.join(', ')}</p>
       )}
     </div>
   );
 }
 
-function SectionBlock({ section, filter, query }) {
+// `getDish` lets PrivateDiningTab reuse this exact section renderer with a
+// per-item price swap (dine-in vs takeaway) instead of duplicating the
+// heading + column-list markup a second time.
+function SectionBlock({ section, filter, query, getDish }) {
   const dishes = useMemo(() => {
-    return section.items.filter(d => {
-      const qMatch = !query ||
-        d.name.toLowerCase().includes(query.toLowerCase()) ||
-        (d.desc || '').toLowerCase().includes(query.toLowerCase());
-      if (!qMatch) return false;
-      if (filter === 'veg')   return d.isVeg || d.isVegan;
-      if (filter === 'vegan') return d.isVegan;
-      if (filter === 'gf')    return !d.hasGluten;
-      if (filter === 'spicy') return d.isChilli;
-      return true;
-    });
+    return section.items.filter(d => matchesFilters(d, filter, query));
   }, [section, filter, query]);
 
   if (dishes.length === 0) return null;
 
   return (
-    <div className="mb-10">
-      <h2 className="text-[1.35rem] font-bold text-navy-800 mb-5 pb-2.5 border-b-2 border-maroon/20 flex items-center gap-2">
-        {section.icon && <span className="text-[1.1rem]">{section.icon}</span>}
+    <div className="mb-12">
+      <h2 className="font-brand text-xl font-bold text-black mb-1.5">
         {section.name}
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {dishes.map((d, i) => <DishCard key={i} dish={d} />)}
+      <div className="w-10 h-[2px] bg-maroon/50 mb-5" />
+      {/* CSS columns, not a grid of cards — dishes flow down one column
+          then the next, the way a printed two-column menu sets type,
+          instead of pairing items into equal-height rows regardless of
+          how long each description runs. */}
+      <div className="columns-1 md:columns-2 gap-x-12">
+        {dishes.map((d, i) => <DishRow key={i} dish={getDish ? getDish(d) : d} />)}
       </div>
     </div>
   );
@@ -88,27 +108,38 @@ function SectionBlock({ section, filter, query }) {
 function AllergenLegend() {
   const [open, setOpen] = useState(false);
   return (
-    <div className="mt-8 border border-[#e5e7eb] rounded-[8px] overflow-hidden">
+    <div className="mt-10 pt-6 border-t border-neutral-200">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-5 py-3.5 bg-[#f9fafb] text-[0.88rem] font-semibold text-[#374151] cursor-pointer hover:bg-[#f3f4f6] transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-navy-700 cursor-pointer hover:text-maroon transition-colors"
         aria-expanded={open}
       >
-        <span className="flex items-center gap-2"><Info size={15} className="text-[#6b7280]" /> Allergen Key</span>
-        <span className="text-[#9ca3af]">{open ? '▲' : '▼'}</span>
+        <Info size={14} />
+        <span>Allergen key</span>
+        <span className="text-text-muted">{open ? '−' : '+'}</span>
       </button>
-      {open && (
-        <div className="px-5 py-4 bg-white">
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-[0.78rem] text-[#4b5563]">
-            {ALLERGEN_LEGEND.map(a => (
-              <span key={a.code}><strong className="text-black">{a.code}</strong> — {a.label}</span>
-            ))}
-          </div>
-          <p className="text-[0.78rem] text-[#9ca3af] mt-3 leading-[1.4]">
-            Absence of a code does not guarantee the dish is free from that allergen. Please inform your server of any allergy before ordering.
-          </p>
-        </div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="overflow-hidden"
+          >
+            <div className="mt-4">
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-text-muted">
+                {ALLERGEN_LEGEND.map(a => (
+                  <span key={a.code}><strong className="text-black">{a.code}</strong> — {a.label}</span>
+                ))}
+              </div>
+              <p className="text-xs text-text-muted mt-3 leading-[1.4] max-w-[640px]">
+                Absence of a code does not guarantee the dish is free from that allergen. Please inform your server of any allergy before ordering.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -119,36 +150,38 @@ function TodayTab({ onOpenBooking, onNavigateTab }) {
 
   return (
     <div className="max-w-[840px] mx-auto">
-      {/* Live status banner */}
-      <div className={`rounded-[10px] p-5 mb-8 flex items-start gap-4 ${today.kitchenOpen ? 'bg-[#f0fdf4] border border-[#bbf7d0]' : 'bg-[#fef2f2] border border-[#fecaca]'}`}>
-        <div className={`w-3 h-3 rounded-full mt-1 shrink-0 ${today.kitchenOpen ? 'bg-[#22c55e]' : 'bg-[#ef4444]'} animate-pulse`} />
+      {/* Live status — a plain status line with a status dot, not a
+          coloured alert box. The dot still tells you open/closed at a
+          glance; it no longer looks like a dashboard warning banner. */}
+      <div className="flex items-center gap-3 mb-8 pb-6 border-b border-neutral-200">
+        <span className={clsx('w-2.5 h-2.5 rounded-full shrink-0 animate-pulse', today.kitchenOpen ? 'bg-success' : 'bg-caution')} />
         <div>
-          <p className="font-bold text-[0.95rem] mb-0.5">
+          <p className="font-brand font-bold text-lg text-black">
             {today.kitchenOpen ? `Kitchen open — closes ${today.closesAt}` : `Kitchen closed — opens ${today.opensAt}`}
           </p>
-          <p className="text-[0.88rem] text-[#4b5563]">{today.dayLabel}, {today.timeLabel}</p>
+          <p className="text-sm text-text-muted">{today.dayLabel}, {today.timeLabel}</p>
         </div>
       </div>
 
       {/* What's on now */}
-      <h2 className="text-[1.6rem] font-bold mb-6">What can I order right now?</h2>
+      <h2 className="font-brand text-xl font-bold mb-6">What can I order right now?</h2>
       {today.available.length === 0 ? (
-        <div className="bg-[#f9fafb] rounded-[10px] p-8 text-center text-[#6b7280]">
-          <Clock size={32} className="mx-auto mb-3 text-[#d1d5db]" />
-          <p className="font-semibold text-black mb-1">The kitchen is currently closed.</p>
-          <p className="text-[0.92rem]">Opening hours: Sun 12–8pm · Mon–Thu 12–9pm · Fri–Sat 12–10pm</p>
+        <div className="text-center py-10 border border-dashed border-neutral-200">
+          <Clock size={28} className="mx-auto mb-3 text-neutral-400" />
+          <p className="font-brand font-bold text-black mb-1">The kitchen is currently closed.</p>
+          <p className="text-sm text-text-muted">Opening hours: Sun 12–8pm · Mon–Thu 12–9pm · Fri–Sat 12–10pm</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10">
           {today.available.map((item) => (
             <button
               key={item.tabId}
               onClick={() => onNavigateTab(item.tabId)}
-              className="flex items-center justify-between p-5 bg-white rounded-[10px] border border-[#e5e7eb] shadow-sm hover:border-maroon/50 hover:shadow-md hover:-translate-y-[2px] transition-all text-left group cursor-pointer"
+              className="flex items-center justify-between p-5 bg-white border border-neutral-200 hover:border-maroon/40 hover:bg-warm-cream/50 transition-[border-color,background-color] text-left group cursor-pointer"
             >
               <div>
-                <div className="text-[1.1rem] font-bold text-black mb-0.5">{item.name}</div>
-                <div className="text-[0.84rem] text-[#6b7280]">{item.until}</div>
+                <div className="font-brand text-lg font-bold text-black mb-0.5">{item.name}</div>
+                <div className="text-xs text-text-muted">{item.until}</div>
               </div>
               <ChevronRight size={18} className="text-maroon shrink-0 group-hover:translate-x-1 transition-transform" />
             </button>
@@ -157,12 +190,12 @@ function TodayTab({ onOpenBooking, onNavigateTab }) {
       )}
 
       {/* Availability schedule */}
-      <div className="bg-warm-cream border border-[#eee8dc] rounded-[10px] p-6">
-        <h3 className="text-[1.05rem] font-bold mb-4">Full week schedule</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2.5 text-[0.88rem]">
+      <div className="bg-warm-cream border border-neutral-200 p-6">
+        <h3 className="font-brand text-lg font-bold mb-4">Full week schedule</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2.5 text-sm">
           {today.schedule.map((row, i) => (
-            <div key={i} className="flex justify-between border-b border-[#eee8dc] pb-2 last:border-0">
-              <span className="text-[#6b7280]">{row.label}</span>
+            <div key={i} className="flex justify-between border-b border-neutral-200 pb-2 last:border-0">
+              <span className="text-text-muted">{row.label}</span>
               <span className="font-semibold text-black">{row.hours}</span>
             </div>
           ))}
@@ -180,26 +213,14 @@ function TodayTab({ onOpenBooking, onNavigateTab }) {
 
 /* ─── STANDARD MENU TAB ─────────────────────────────────────────────────────  */
 function StandardMenuTab({ sections, filter, query }) {
-  const hasResults = sections.some(s =>
-    s.items.some(d => {
-      const qMatch = !query ||
-        d.name.toLowerCase().includes(query.toLowerCase()) ||
-        (d.desc || '').toLowerCase().includes(query.toLowerCase());
-      if (!qMatch) return false;
-      if (filter === 'veg')   return d.isVeg || d.isVegan;
-      if (filter === 'vegan') return d.isVegan;
-      if (filter === 'gf')    return !d.hasGluten;
-      if (filter === 'spicy') return d.isChilli;
-      return true;
-    })
-  );
+  const hasResults = sections.some(s => s.items.some(d => matchesFilters(d, filter, query)));
 
   if (!hasResults) {
     return (
-      <div className="text-center py-16 px-5 bg-[#fafafa] rounded-[12px] border border-[#e5e7eb]">
-        <Search size={36} className="text-[#aaa] mb-3 mx-auto" />
-        <h3 className="text-[1.2rem] font-bold mb-1">No dishes match your filters</h3>
-        <p className="text-[#777] text-[0.92rem]">Try clearing your search or changing the dietary filter.</p>
+      <div className="text-center py-16 px-5">
+        <Search size={32} className="text-neutral-400 mb-3 mx-auto" />
+        <h3 className="font-brand text-lg font-bold mb-1">No dishes match your filters</h3>
+        <p className="text-text-muted text-md">Try clearing your search or changing the dietary filter.</p>
       </div>
     );
   }
@@ -217,21 +238,25 @@ function StandardMenuTab({ sections, filter, query }) {
 function PrivateDiningTab({ filter, query, onOpenBooking }) {
   const [mode, setMode] = useState('dine-in'); // 'dine-in' | 'takeaway'
   const data = menuData.privateDining;
+  const getDish = (dish) => ({
+    ...dish,
+    price: (mode === 'dine-in' ? dish.priceDineIn : dish.priceTakeaway) || dish.price,
+  });
 
   return (
     <div>
       {/* Mode toggle */}
-      <div className="flex gap-2 mb-8 p-1 bg-[#f3f4f6] rounded-[8px] w-fit">
+      <div className="flex gap-2 mb-8 p-1 bg-neutral-100 w-fit">
         {[
-          { id: 'dine-in',   label: '🍽️ Dine-In' },
-          { id: 'takeaway',  label: '🥡 Takeaway' }
+          { id: 'dine-in',   label: 'Dine-In' },
+          { id: 'takeaway',  label: 'Takeaway' }
         ].map(m => (
           <button
             key={m.id}
             onClick={() => setMode(m.id)}
             className={clsx(
               'px-5 py-2 text-sm font-semibold rounded-control transition-colors cursor-pointer',
-              mode === m.id ? 'bg-white text-black shadow-control' : 'text-[#6b7280] hover:text-black'
+              mode === m.id ? 'bg-white text-black shadow-control' : 'text-text-muted hover:text-black'
             )}
           >
             {m.label}
@@ -240,7 +265,7 @@ function PrivateDiningTab({ filter, query, onOpenBooking }) {
       </div>
 
       {/* Pricing note */}
-      <div className="bg-warm-cream border border-[#eee8dc] rounded-[8px] p-4 mb-8 text-[0.88rem] text-[#4b5563]">
+      <div className="bg-warm-cream border border-neutral-200 p-4 mb-8 text-sm text-text-muted">
         {mode === 'dine-in' ? (
           <span>Dine-in party food is available à la carte. Minimum 48 hours' notice required. <strong>Please call to pre-book:</strong> 01494 766 849.</span>
         ) : (
@@ -248,36 +273,9 @@ function PrivateDiningTab({ filter, query, onOpenBooking }) {
         )}
       </div>
 
-      {data.sections.map((section, i) => {
-        const dishes = section.items.filter(d => {
-          const qMatch = !query ||
-            d.name.toLowerCase().includes(query.toLowerCase()) ||
-            (d.desc || '').toLowerCase().includes(query.toLowerCase());
-          if (!qMatch) return false;
-          if (filter === 'veg')   return d.isVeg || d.isVegan;
-          if (filter === 'vegan') return d.isVegan;
-          if (filter === 'gf')    return !d.hasGluten;
-          if (filter === 'spicy') return d.isChilli;
-          return true;
-        });
-
-        if (dishes.length === 0) return null;
-
-        return (
-          <div key={i} className="mb-10">
-            <h2 className="text-[1.35rem] font-bold text-navy-800 mb-5 pb-2.5 border-b-2 border-maroon/20 flex items-center gap-2">
-              {section.icon && <span>{section.icon}</span>}
-              {section.name}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {dishes.map((dish, j) => {
-                const price = mode === 'dine-in' ? dish.priceDineIn : dish.priceTakeaway;
-                return <DishCard key={j} dish={{ ...dish, price: price || dish.price }} />;
-              })}
-            </div>
-          </div>
-        );
-      })}
+      {data.sections.map((section, i) => (
+        <SectionBlock key={i} section={section} filter={filter} query={query} getDish={getDish} />
+      ))}
 
       <div className="mt-10 text-center">
         <Button variant="primary" icon={CalendarCheck} onClick={onOpenBooking}>
@@ -290,14 +288,14 @@ function PrivateDiningTab({ filter, query, onOpenBooking }) {
 
 /* ─── MAIN PAGE ─────────────────────────────────────────────────────────────  */
 const TABS = [
-  { id: 'today',          label: 'Today',               emoji: '📍' },
-  { id: 'all-day',        label: 'All Day',             emoji: '🍽️' },
-  { id: 'breakfast',      label: 'Breakfast & Brunch',  emoji: '🥞' },
-  { id: 'lunch',          label: 'Lunch',               emoji: '☀️' },
-  { id: 'sunday-roast',   label: 'Sunday Roast',        emoji: '🍖' },
-  { id: 'junior',         label: 'Junior Menu',         emoji: '⭐' },
-  { id: 'drinks',         label: 'Drinks',              emoji: '🍺' },
-  { id: 'private-dining', label: 'Private Dining',      emoji: '🎉' },
+  { id: 'today',          label: 'Today' },
+  { id: 'all-day',        label: 'All Day' },
+  { id: 'breakfast',      label: 'Breakfast & Brunch' },
+  { id: 'lunch',          label: 'Lunch' },
+  { id: 'sunday-roast',   label: 'Sunday Roast' },
+  { id: 'junior',         label: 'Junior Menu' },
+  { id: 'drinks',         label: 'Drinks' },
+  { id: 'private-dining', label: 'Private Dining' },
 ];
 
 export default function MenuPage({ onOpenBooking }) {
@@ -318,7 +316,6 @@ export default function MenuPage({ onOpenBooking }) {
     setQuery('');
   }, [activeTab]);
 
-  const activeTabData = TABS.find(t => t.id === activeTab);
   const sections = menuData[activeTab]?.sections || [];
 
   return (
@@ -328,53 +325,60 @@ export default function MenuPage({ onOpenBooking }) {
           below a generic "Handcrafted with Passion" kicker (which also
           repeated the failing maroon-on-dark-navy contrast pattern
           found elsewhere on this page's original badge). */}
-      <section className="bg-dark-navy text-white py-10 px-6 text-center relative border-b border-black overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#002e5d]/60 to-[#232f3c]/90" />
+      <section className="bg-navy-800 text-white py-10 px-6 text-center relative border-b border-black overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-navy-950/60 to-navy-800/90" />
         <div className="w-full max-w-[1240px] mx-auto relative z-10">
           <div className={clsx(
-            'inline-flex items-center gap-2 mb-4 px-4 py-1.5 rounded-full text-sm font-semibold',
+            'inline-flex items-center gap-2 mb-4 px-4 py-1.5 text-sm font-semibold',
             today.kitchenOpen
-              ? 'bg-[#22c55e]/20 text-[#bbf7d0] border border-[#22c55e]/30'
-              : 'bg-[#ef4444]/20 text-[#fecaca] border border-[#ef4444]/30'
+              ? 'bg-success/20 text-success-tint-dark border border-success/30'
+              : 'bg-caution/20 text-caution-tint-dark border border-caution/30'
           )}>
-            <span className={clsx('w-2 h-2 rounded-full', today.kitchenOpen ? 'bg-[#22c55e]' : 'bg-[#ef4444]')} />
+            <span className={clsx('w-2 h-2 rounded-full', today.kitchenOpen ? 'bg-success' : 'bg-caution')} />
             {today.kitchenOpen ? `Kitchen open now · closes ${today.closesAt}` : `Kitchen closed · opens ${today.opensAt}`}
           </div>
           <h1 className="text-white text-[clamp(2.4rem,4.5vw,3.2rem)] font-bold mb-3 drop-shadow-md tracking-[-0.015em]">
             Food &amp; Drink at The White Lion
           </h1>
-          <p className="text-[#cbd5e1] text-lg max-w-[680px] mx-auto leading-[1.6]">
+          <p className="text-text-muted-on-dark text-lg max-w-[680px] mx-auto leading-[1.6]">
             Authentic Indian cuisine and traditional British pub classics — all under one roof in Amersham.
           </p>
         </div>
       </section>
 
-      <div className="w-full max-w-[1240px] mx-auto px-6 py-8 pb-20">
-        {/* Tab Navigation */}
-        <nav aria-label="Menu sections" className="flex flex-wrap gap-2 mb-8 pb-4 border-b border-[#e5e7eb]">
+      <div className="w-full max-w-[1240px] mx-auto px-6 py-10 pb-20">
+        {/* Tab Navigation — plain tracked text with an underline on the
+            active tab, not solid pill buttons. Matches how Dishoom and
+            Rules set their own menu-section tabs; the previous filled
+            navy-capsule pills read as app UI on a page that's otherwise
+            gone editorial. */}
+        <nav aria-label="Menu sections" className="flex flex-wrap gap-x-7 gap-y-3 mb-8 border-b border-neutral-200">
           {TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={clsx(
-                'inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full cursor-pointer transition-all border',
-                activeTab === tab.id
-                  ? 'bg-navy-800 text-white border-navy-800 shadow-control'
-                  : 'bg-white text-[#555e69] border-[#d1d5db] hover:bg-[#f3f4f6] hover:text-black'
+                'relative pb-3 text-md font-semibold tracking-[0.01em] cursor-pointer transition-colors',
+                activeTab === tab.id ? 'text-maroon' : 'text-text-muted hover:text-black'
               )}
               aria-current={activeTab === tab.id ? 'page' : undefined}
             >
-              <span>{tab.emoji}</span>
-              <span>{tab.label}</span>
+              {tab.label}
+              {activeTab === tab.id && (
+                <span className="absolute left-0 right-0 -bottom-px h-[2px] bg-maroon" />
+              )}
             </button>
           ))}
         </nav>
 
-        {/* Search & Filter Bar — shown on all tabs except Today */}
+        {/* Search & Filter Bar — shown on all tabs except Today. Field
+            styling now matches every form on the site (warm-cream field,
+            maroon focus) via the same tokens as Contact/Party Venue/
+            Reservations, instead of a generic white/grey input. */}
         {activeTab !== 'today' && (
-          <div className="bg-[#f9fafb] p-4 rounded-[8px] border border-[#e5e7eb] mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full md:max-w-[380px]">
-              <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+          <div className="mb-6 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+            <div className="relative w-full md:max-w-[320px]">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-maroon/50" />
               <label htmlFor="menu-search" className="sr-only">Search dishes</label>
               <input
                 id="menu-search"
@@ -382,7 +386,7 @@ export default function MenuPage({ onOpenBooking }) {
                 placeholder="Search dishes…"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-[6px] border border-[#d1d5db] text-[0.95rem] bg-white focus:outline-none focus:border-book-table focus:ring-1 focus:ring-book-table/30 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 border border-maroon/25 bg-warm-cream font-brand text-md text-black transition-colors focus:outline-none focus:border-maroon focus:bg-white"
               />
             </div>
             <div className="flex gap-2 flex-wrap" role="group" aria-label="Dietary filters">
@@ -392,10 +396,10 @@ export default function MenuPage({ onOpenBooking }) {
                   onClick={() => setFilter(f.id)}
                   aria-pressed={filter === f.id}
                   className={clsx(
-                    'px-3.5 py-1.5 text-sm font-semibold rounded-control transition-all border cursor-pointer',
+                    'px-3.5 py-1.5 text-xs font-semibold tracking-[0.02em] rounded-control transition-colors border cursor-pointer',
                     filter === f.id
-                      ? 'bg-book-table text-white border-book-table shadow-control'
-                      : 'bg-transparent text-black border-black/30 hover:bg-black hover:text-white'
+                      ? 'bg-maroon text-white border-maroon'
+                      : 'bg-transparent text-text-muted border-neutral-300 hover:border-maroon/50 hover:text-maroon'
                   )}
                 >
                   {f.label}
@@ -407,44 +411,57 @@ export default function MenuPage({ onOpenBooking }) {
 
         {/* Allergen disclaimer (shown on all menu tabs except Today) */}
         {activeTab !== 'today' && (
-          <p className="text-[0.8rem] text-[#9ca3af] mb-6 flex items-center gap-1.5">
+          <p className="text-xs text-text-muted mb-8 flex items-center gap-1.5">
             <Info size={13} className="shrink-0" />
             Dietary filters are for browsing only — please always inform your server of any allergy before ordering.
           </p>
         )}
 
-        {/* Tab content */}
-        {activeTab === 'today' && (
-          <TodayTab onOpenBooking={onOpenBooking} onNavigateTab={setActiveTab} />
-        )}
-        {activeTab === 'all-day' && (
-          <StandardMenuTab sections={menuData.allDay.sections} filter={filter} query={query} />
-        )}
-        {activeTab === 'breakfast' && (
-          <StandardMenuTab sections={menuData.breakfast.sections} filter={filter} query={query} />
-        )}
-        {activeTab === 'lunch' && (
-          <StandardMenuTab sections={menuData.lunch.sections} filter={filter} query={query} />
-        )}
-        {activeTab === 'sunday-roast' && (
-          <StandardMenuTab sections={menuData.sundayRoast.sections} filter={filter} query={query} />
-        )}
-        {activeTab === 'junior' && (
-          <StandardMenuTab sections={menuData.junior.sections} filter={filter} query={query} />
-        )}
-        {activeTab === 'drinks' && (
-          <StandardMenuTab sections={menuData.drinks.sections} filter={filter} query={query} />
-        )}
-        {activeTab === 'private-dining' && (
-          <PrivateDiningTab filter={filter} query={query} onOpenBooking={onOpenBooking} />
-        )}
+        {/* Tab content — crossfades on switch rather than hard-cutting, since
+            this is the main content-swap on the page's busiest surface.
+            mode="wait" so the outgoing panel fully clears before the next
+            one fades in (no overlap of two menus' worth of text). */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+          >
+            {activeTab === 'today' && (
+              <TodayTab onOpenBooking={onOpenBooking} onNavigateTab={setActiveTab} />
+            )}
+            {activeTab === 'all-day' && (
+              <StandardMenuTab sections={menuData.allDay.sections} filter={filter} query={query} />
+            )}
+            {activeTab === 'breakfast' && (
+              <StandardMenuTab sections={menuData.breakfast.sections} filter={filter} query={query} />
+            )}
+            {activeTab === 'lunch' && (
+              <StandardMenuTab sections={menuData.lunch.sections} filter={filter} query={query} />
+            )}
+            {activeTab === 'sunday-roast' && (
+              <StandardMenuTab sections={menuData.sundayRoast.sections} filter={filter} query={query} />
+            )}
+            {activeTab === 'junior' && (
+              <StandardMenuTab sections={menuData.junior.sections} filter={filter} query={query} />
+            )}
+            {activeTab === 'drinks' && (
+              <StandardMenuTab sections={menuData.drinks.sections} filter={filter} query={query} />
+            )}
+            {activeTab === 'private-dining' && (
+              <PrivateDiningTab filter={filter} query={query} onOpenBooking={onOpenBooking} />
+            )}
+          </motion.div>
+        </AnimatePresence>
 
         {/* Allergen legend accordion (all tabs except Today) */}
         {activeTab !== 'today' && <AllergenLegend />}
 
         {/* No bottom CTA banner here — this page already leads with a
             live "book a table" path (Today tab) and booking is one click
-            away from every tab via the sticky Navbar/TopBar, so a third
+            away from every tab via the sticky Navbar, so a third
             copy of the site-wide gradient CTA box would be redundant
             chrome, not a missing conversion path. */}
       </div>

@@ -1,3 +1,5 @@
+import { siteData } from './siteData';
+
 /**
  * menuData.js
  * ─────────────────────────────────────────────────────────────────────────────
@@ -18,6 +20,11 @@
  *  • Drinks list has diverged between All Day PDF and standalone Drinks PDF.
  *    Drinks tab currently uses the standalone Drinks Menu as primary.
  *  • "Sulphur" on Party PDFs corrected to "Sulphites" throughout (§3).
+ *  • Breakfast/brunch (Sat–Sun 8:30–11:30am) starts before the kitchen's
+ *    general opening time (11am on siteData.foodServingHours). The "what's
+ *    available now" list is gated on the kitchen being open, so it won't
+ *    surface breakfast between 8:30–11am. Confirm whether breakfast really
+ *    runs on a separate, earlier line before changing this gate.
  */
 
 /* ─── ALLERGEN LEGEND ────────────────────────────────────────────────────────
@@ -48,8 +55,45 @@ export const ALLERGEN_LEGEND = [
 /* ─── AVAILABILITY ENGINE ────────────────────────────────────────────────────
    computeToday() encodes all the availability rules scattered as headers and
    footnotes across the 11 PDFs into one function (Part 4, §4).
-   Kitchen hours: Sun 12–8pm · Mon–Thu 12–9pm · Fri–Sat 12–10pm
+
+   Kitchen hours were previously a second, hand-typed copy of
+   siteData.foodServingHours and had drifted from it (this copy said
+   Sat/Sun opened at 12pm; the Contact page — reading siteData directly —
+   correctly said 11am). Derived from siteData below instead, so there is
+   exactly one place to update food-serving hours.
 ────────────────────────────────────────────────────────────────────────────── */
+const DAY_INDEX = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+const WEEK_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+function parseTimeToHour(str) {
+  const m = str.trim().match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = parseInt(m[2], 10);
+  const ap = m[3].toUpperCase();
+  if (ap === 'PM' && h !== 12) h += 12;
+  if (ap === 'AM' && h === 12) h = 0;
+  return h + min / 60;
+}
+
+function expandDayRange(daysStr) {
+  const parts = daysStr.split('-').map((s) => s.trim().slice(0, 3));
+  if (parts.length === 1) return [DAY_INDEX[parts[0]]];
+  const start = WEEK_ORDER.indexOf(parts[0]);
+  const end = WEEK_ORDER.indexOf(parts[1]);
+  return WEEK_ORDER.slice(start, end + 1).map((d) => DAY_INDEX[d]);
+}
+
+const KITCHEN_HOURS_BY_DAY = {};
+siteData.foodServingHours.forEach((row) => {
+  const [openStr, closeStr] = row.hours.split('-').map((s) => s.trim());
+  const open = parseTimeToHour(openStr);
+  const close = parseTimeToHour(closeStr);
+  expandDayRange(row.days).forEach((dayIdx) => {
+    KITCHEN_HOURS_BY_DAY[dayIdx] = { open, close };
+  });
+});
+
 export function computeToday(now = new Date()) {
   const day  = now.getDay();  // 0=Sun, 1=Mon … 6=Sat
   const hour = now.getHours();
@@ -58,18 +102,7 @@ export function computeToday(now = new Date()) {
 
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  /* Kitchen hours by day */
-  const kitchenHours = {
-    0: { open: 12, close: 20 }, // Sun 12–8pm
-    1: { open: 12, close: 21 }, // Mon 12–9pm
-    2: { open: 12, close: 21 },
-    3: { open: 12, close: 21 },
-    4: { open: 12, close: 21 }, // Thu 12–9pm
-    5: { open: 12, close: 22 }, // Fri 12–10pm
-    6: { open: 12, close: 22 }, // Sat 12–10pm
-  };
-
-  const kh = kitchenHours[day];
+  const kh = KITCHEN_HOURS_BY_DAY[day];
   const kitchenOpen = hm >= kh.open && hm < kh.close;
 
   const fmt = (h) => {
@@ -112,16 +145,16 @@ export function computeToday(now = new Date()) {
     available.push({ tabId: 'drinks', name: 'Drinks Menu', until: `Available until ${fmt(kh.close)}` });
   }
 
-  /* Week schedule for the Today tab's reference table */
+  /* Week schedule for the Today tab's reference table — the kitchen rows
+     are siteData.foodServingHours itself (same rows Contact shows), not a
+     third hand-typed copy. */
   const schedule = [
     { label: 'All Day Menu',     hours: 'Mon–Sun, kitchen hours' },
     { label: 'Breakfast',        hours: 'Sat–Sun, 8:30–11:30am' },
     { label: 'Brunch',           hours: 'Sat–Sun, 8:30am–5pm' },
     { label: 'Lunch',            hours: 'Mon–Fri, 12–4pm (all day Thu)' },
     { label: 'Sunday Roast',     hours: 'Sundays only, 12–8pm' },
-    { label: 'Kitchen (Mon–Thu)', hours: '12pm – 9pm' },
-    { label: 'Kitchen (Fri–Sat)', hours: '12pm – 10pm' },
-    { label: 'Kitchen (Sun)',     hours: '12pm – 8pm' },
+    ...siteData.foodServingHours.map((row) => ({ label: `Kitchen (${row.days})`, hours: row.hours })),
   ];
 
   const timeLabel = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -160,7 +193,7 @@ function dish(name, price, desc = '', opts = {}) {
 /* ─── ALL DAY MENU ──────────────────────────────────────────────────────────  */
 const allDaySections = [
   {
-    name: 'Starters', icon: '🥗',
+    name: 'Starters',
     items: [
       dish('Soup of the Day (V)',          '£5.95', 'Served with crusty bread. Please ask your server for today\'s soup.', { isVeg: true }),
       dish('Garlic Bread (V)',             '£4.50', 'Toasted baguette with garlic butter.', { isVeg: true }),
@@ -172,7 +205,7 @@ const allDaySections = [
     ]
   },
   {
-    name: 'Handmade Burgers', icon: '🍔',
+    name: 'Handmade Burgers',
     items: [
       dish('Classic Burger',                '£13.00', 'Beef patty, burger sauce, iceberg lettuce, sliced tomato and gherkin in a brioche bun. Served with chunky chips.'),
       dish('Beef Burger with Cheese & Bacon', '£16.00', 'Beef patty, streaky bacon, cheddar, burger sauce, iceberg lettuce, sliced tomato and gherkin in a brioche bun. Served with chunky chips. Optional: +£6 extra pattie, +£2 extra bacon.'),
@@ -181,7 +214,7 @@ const allDaySections = [
     ]
   },
   {
-    name: 'Signature Handmade Pizzas', icon: '🍕',
+    name: 'Signature Handmade Pizzas',
     items: [
       dish('Classic Margherita (V)',       '£11.50', 'San Marzano tomato base, mozzarella, fresh basil.', { isVeg: true }),
       dish('Pepperoni',                    '£13.50', 'San Marzano tomato base, mozzarella, spicy pepperoni.'),
@@ -191,7 +224,7 @@ const allDaySections = [
     ]
   },
   {
-    name: 'Classic Pub Mains', icon: '🍺',
+    name: 'Classic Pub Mains',
     items: [
       dish('Beer Battered Fish & Chips',   '£15.95', 'Cod fillet in light beer batter, chunky chips, mushy peas and tartare sauce.'),
       dish('Scampi & Chips',              '£13.95', 'Breaded scampi, chunky chips, garden peas and tartare sauce.'),
@@ -205,7 +238,7 @@ const allDaySections = [
     ]
   },
   {
-    name: 'Indian Kitchen', icon: '🌶️',
+    name: 'Indian Kitchen',
     items: [
       dish('Chicken Tikka Masala',        '£13.95', 'Tender chicken tikka in a rich creamy tomato sauce. Served with rice and naan.'),
       dish('Goat Curry (on bone)',        '£14.95', 'Our signature dish — slow-cooked bone-in goat in a warming aromatic sauce. Served with rice and naan.'),
@@ -220,7 +253,7 @@ const allDaySections = [
     ]
   },
   {
-    name: 'On the Side', icon: '🥗',
+    name: 'On the Side',
     items: [
       dish('Chunky Chips (VG)',           '£3.50', '', { isVegan: true }),
       dish('Onion Rings (V)',             '£3.50', '', { isVeg: true }),
@@ -232,7 +265,7 @@ const allDaySections = [
     ]
   },
   {
-    name: 'Desserts', icon: '🍮',
+    name: 'Desserts',
     items: [
       dish('Sticky Toffee Pudding (V)',   '£6.95', 'Warm sponge cake with toffee sauce, served with vanilla ice cream.', { isVeg: true }),
       dish('Chocolate Fudge Cake (V)',    '£6.50', 'Rich chocolate fudge cake served with vanilla ice cream or cream.', { isVeg: true }),
@@ -247,7 +280,7 @@ const allDaySections = [
 /* ─── BREAKFAST & BRUNCH ─────────────────────────────────────────────────────  */
 const breakfastSections = [
   {
-    name: 'Full Breakfasts (until 11:30am Sat–Sun)', icon: '🍳',
+    name: 'Full Breakfasts (until 11:30am Sat–Sun)',
     items: [
       dish('Full English Breakfast',      '£10.95', 'Two rashers of back bacon, two pork sausages, two fried eggs, grilled mushroom, grilled tomato, baked beans and toast.'),
       dish('Vegetarian Full Breakfast (V)', '£9.95', 'Two veggie sausages, two fried eggs, grilled mushroom, grilled tomato, baked beans, hash brown and toast.', { isVeg: true }),
@@ -257,7 +290,7 @@ const breakfastSections = [
     ]
   },
   {
-    name: 'Brunch (until 5pm Sat–Sun)', icon: '🥞',
+    name: 'Brunch (until 5pm Sat–Sun)',
     items: [
       dish('Pancake Stack (V)',           '£8.95', 'Three fluffy American pancakes with maple syrup and butter. Add bacon +£2.00.', { isVeg: true }),
       dish('Avocado Toast (VG)',          '£9.50', 'Sourdough toast with smashed avocado, cherry tomatoes, chilli flakes and a drizzle of olive oil.', { isVegan: true }),
@@ -272,13 +305,13 @@ const breakfastSections = [
 /* ─── LUNCH ──────────────────────────────────────────────────────────────────  */
 const lunchSections = [
   {
-    name: 'Set Menu', icon: '⭐',
+    name: 'Set Menu',
     items: [
       dish('2 Courses for Two', '£30.00', 'Available Mon–Fri 12–4pm and all day Thursday. Choose any two starters and two mains from the lunch menu.', { isVeg: false }),
     ]
   },
   {
-    name: 'Light Bites & Sandwiches', icon: '🥪',
+    name: 'Light Bites & Sandwiches',
     items: [
       dish('Club Sandwich',               '£9.50', 'Triple-decker with chicken, bacon, egg, lettuce and tomato. Served with chips.'),
       dish('BLT Sandwich',                '£8.50', 'Back bacon, crisp lettuce, sliced tomato on malted bloomer. Served with chips.'),
@@ -288,7 +321,7 @@ const lunchSections = [
     ]
   },
   {
-    name: 'Lunch Mains', icon: '🍽️',
+    name: 'Lunch Mains',
     items: [
       dish('Classic Margherita Pizza (V)', '£10.50', 'San Marzano tomato base, mozzarella, fresh basil.', { isVeg: true }),
       dish('Beef Burger with Cheese & Bacon', '£11.50', 'Beef patty, cheddar, bacon, burger sauce, lettuce, tomato in a brioche bun. Served with chips.'),
@@ -305,7 +338,7 @@ const lunchSections = [
 /* ─── SUNDAY ROAST ───────────────────────────────────────────────────────────  */
 const sundayRoastSections = [
   {
-    name: 'Sunday Roasts', icon: '🍖',
+    name: 'Sunday Roasts',
     items: [
       dish('Roast Topside of Beef',       '£16.95', 'Slow-roasted topside of British beef, served with roast potatoes, Yorkshire pudding, honey-glazed carrots, seasonal vegetables and rich beef gravy.'),
       dish('Roast Leg of Lamb',           '£16.50', 'Slow-roasted British lamb, mint sauce, roast potatoes, Yorkshire pudding, honey-glazed carrots, seasonal vegetables and red wine gravy.'),
@@ -316,7 +349,7 @@ const sundayRoastSections = [
     ]
   },
   {
-    name: 'Sunday Sides', icon: '🥗',
+    name: 'Sunday Sides',
     items: [
       dish('Extra Yorkshire Pudding (V)', '£1.50', '', { isVeg: true }),
       dish('Cauliflower Cheese (V)',      '£3.95', 'Baked cauliflower in a creamy cheese sauce.', { isVeg: true }),
@@ -325,7 +358,7 @@ const sundayRoastSections = [
     ]
   },
   {
-    name: 'Sunday Desserts', icon: '🍮',
+    name: 'Sunday Desserts',
     items: [
       dish('Sticky Toffee Pudding (V)',   '£6.95', 'Warm sponge with toffee sauce and vanilla ice cream.', { isVeg: true }),
       dish('Chocolate Brownie (V)',       '£6.50', 'Warm brownie with vanilla ice cream.', { isVeg: true }),
@@ -337,7 +370,7 @@ const sundayRoastSections = [
 /* ─── JUNIOR MENU ────────────────────────────────────────────────────────────  */
 const juniorSections = [
   {
-    name: 'Junior Mains', icon: '⭐',
+    name: 'Junior Mains',
     items: [
       dish('Mini Fish & Chips',           '£7.50', 'Battered fish fillet, chips and baked beans.'),
       dish('Mini Chicken Nuggets',        '£7.50', 'Six breaded chicken nuggets with chips and baked beans.'),
@@ -348,7 +381,7 @@ const juniorSections = [
     ]
   },
   {
-    name: 'Junior Desserts', icon: '🍦',
+    name: 'Junior Desserts',
     items: [
       dish('Ice Cream (V)',               '£3.50', 'Two scoops of vanilla, chocolate or strawberry.', { isVeg: true }),
       dish('Chocolate Brownie (V)',       '£4.00', 'Warm brownie with ice cream.', { isVeg: true }),
@@ -363,7 +396,7 @@ const juniorSections = [
 ────────────────────────────────────────────────────────────────────────────── */
 const drinksSections = [
   {
-    name: 'Draught', icon: '🍺',
+    name: 'Draught',
     items: [
       dish('Pravha',           'Pint £4.80 / Half £2.60', 'Czech lager, 4.0%'),
       dish('Peroni',           'Pint £5.40 / Half £2.90', 'Italian lager, 5.0%'),
@@ -375,7 +408,7 @@ const drinksSections = [
     ]
   },
   {
-    name: 'Bottles & Cans', icon: '🍶',
+    name: 'Bottles & Cans',
     items: [
       dish('Heineken 0.0',     '£3.80', 'Non-alcoholic lager'),
       dish('Corona Extra',     '£4.50', 'Mexican lager, 4.5%'),
@@ -385,7 +418,7 @@ const drinksSections = [
     ]
   },
   {
-    name: 'Wines by the Glass', icon: '🍷',
+    name: 'Wines by the Glass',
     items: [
       dish('House White (VG)', '125ml £4.80 / 175ml £6.20 / 250ml £8.20', 'Pinot Grigio, Italy — light, crisp, dry.', { isVegan: true }),
       dish('Sauvignon Blanc (VG)', '125ml £5.20 / 175ml £6.80 / 250ml £8.80', 'Marlborough, New Zealand.', { isVegan: true }),
@@ -397,7 +430,7 @@ const drinksSections = [
     ]
   },
   {
-    name: 'Spirits & Mixers', icon: '🥃',
+    name: 'Spirits & Mixers',
     items: [
       dish('House Gin & Tonic',           '£6.50', 'Gordon\'s gin with Fever-Tree tonic.'),
       dish('Hendrick\'s G&T',            '£8.50', 'Served with cucumber and elderflower tonic.'),
@@ -408,7 +441,7 @@ const drinksSections = [
     ]
   },
   {
-    name: 'Cocktails', icon: '🍹',
+    name: 'Cocktails',
     items: [
       dish('White Lion Punch',           '£9.00', 'Vodka, passion fruit, pineapple, elderflower, lemonade.'),
       dish('Espresso Martini',           '£9.50', 'Vodka, Kahlúa, espresso, simple syrup.'),
@@ -419,7 +452,7 @@ const drinksSections = [
     ]
   },
   {
-    name: 'Soft Drinks & Hot Drinks', icon: '☕',
+    name: 'Soft Drinks & Hot Drinks',
     items: [
       dish('Coca-Cola / Diet Coke (VG)', '£3.20', '330ml can or draught pint.', { isVegan: true }),
       dish('Lemonade (VG)',              '£2.80', 'Still or sparkling.', { isVegan: true }),
@@ -441,7 +474,7 @@ const drinksSections = [
 ────────────────────────────────────────────────────────────────────────────── */
 const privateDiningSections = [
   {
-    name: 'Starters', icon: '🥗',
+    name: 'Starters',
     items: [
       { ...dish('Onion Bhaji (V)',          '£5.50', 'Three crispy onion bhajis served with mint and coriander chutney.', { isVeg: true }), priceDineIn: '£5.50', priceTakeaway: 'Included in bundle' },
       { ...dish('Chicken Tikka',            '£7.50', 'Marinated chicken tikka pieces, grilled in the tandoor, served with mint raita.'), priceDineIn: '£7.50', priceTakeaway: 'Included in bundle' },
@@ -454,7 +487,7 @@ const privateDiningSections = [
     ]
   },
   {
-    name: 'Mains', icon: '🍛',
+    name: 'Mains',
     items: [
       { ...dish('Chicken Tikka Masala',     '£13.95', 'Tender chicken tikka in a rich creamy tomato sauce.'), priceDineIn: '£13.95', priceTakeaway: 'Included in bundle' },
       { ...dish('Lamb Rogan Josh',          '£14.50', 'Slow-cooked Kashmiri-spiced lamb.'), priceDineIn: '£14.50', priceTakeaway: 'Included in bundle' },
@@ -469,7 +502,7 @@ const privateDiningSections = [
     ]
   },
   {
-    name: 'Desserts', icon: '🍮',
+    name: 'Desserts',
     items: [
       { ...dish('Gajar Halwa (V)',          '£5.50', 'Traditional Indian carrot dessert with cardamom and pistachios.', { isVeg: true }), priceDineIn: '£5.50', priceTakeaway: 'Included in bundle' },
       { ...dish('Malai Kulfi (V)',          '£5.00', 'Traditional Indian ice cream — pistachio, mango or rose.', { isVeg: true }), priceDineIn: '£5.00', priceTakeaway: 'Included in bundle' },

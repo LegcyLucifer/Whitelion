@@ -2,14 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/assets/logo.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/assets/favicon-64.png" />
+    <link rel="apple-touch-icon" sizes="256x256" href="/assets/favicon-256.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Default SEO — overridden per-page by useSEO hook -->
     <title>The White Lion Amersham — Pub, Restaurant &amp; Indian Cuisine, Little Chalfont</title>
     <meta name="description" content="The White Lion Amersham — authentic Indian cuisine and traditional British pub classics in Little Chalfont. Dog-friendly, live sports, quiz nights, Sunday roasts, and private hire." />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#1b2530" />
+    <meta name="theme-color" content="#212c38" />
+
+    <!-- PWA / installed-app chrome. vite-plugin-pwa injects the manifest
+         link itself at build time; iOS ignores manifest theme/display
+         settings for its own status bar and needs these told separately. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="White Lion" />
 
     <!-- Open Graph -->
     <meta property="og:type"        content="website" />
@@ -29,10 +38,19 @@
     <!-- Canonical -->
     <link rel="canonical" href="https://thewhitelionamersham.co.uk/" />
 
-    <!-- Google Fonts: Noticia Text + Poppins (2-family system) -->
+    <!-- Google Fonts: Fraunces + Libre Franklin (2-family system).
+         Fraunces: an old-style serif built around early-20th-century
+         "wonky" letterforms — heritage character instead of a generic
+         default, requested across its full optical-size range (9..144)
+         so large headings and small italic labels each get the cut built
+         for their size. Libre Franklin: a modernised Franklin Gothic —
+         genuine newsprint/ledger lineage, matching the chalkboard/pinned-
+         noticeboard/letterpress motifs already used throughout the site,
+         and a deliberate move off Poppins (one of the most reused
+         "template" sans-serifs on the web). -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Noticia+Text:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Libre+Franklin:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="root"></div>

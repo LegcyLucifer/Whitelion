@@ -3,174 +3,121 @@ import clsx from 'clsx';
 import { Menu, X, CalendarCheck, Phone } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { siteData } from '../data/siteData';
+import Button from './Button';
+
+// Collapsed the old two navs (an 8-item inline desktop bar that needed
+// manual line-breaks to fit — "What's\nOn", "Party\nVenue" — plus a
+// separate mobile drawer duplicating the same list) into one drawer used
+// at every width. Inspired by Rules' and Big Mamma's header language: a
+// hamburger opens the full sitemap, the wordmark sits alone and centred,
+// and the bar carries exactly one action. The phone number moves out of
+// the persistent chrome (none of the three reference sites keep a live
+// phone number in the header bar) and into the drawer and Footer instead.
+const NAV_ITEMS = [
+  { path: '/', label: 'Home' },
+  { path: '/menu', label: 'Menu' },
+  { path: '/whats-on', label: "What's On" },
+  { path: '/offers', label: 'Offers' },
+  { path: '/reservations', label: 'Reservations' },
+  { path: '/party-venue', label: 'Party Venue' },
+  { path: '/christmas', label: 'Christmas' },
+  { path: '/contact', label: 'Contact' },
+];
 
 export default function Navbar({ onOpenBooking }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (!mobileMenuOpen) return;
+    if (!menuOpen) return;
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') setMobileMenuOpen(false);
+      if (e.key === 'Escape') setMenuOpen(false);
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mobileMenuOpen]);
-
-  const navItems = [
-    { id: '', path: '/', label: 'Home', multiline: false },
-    { id: 'menu', path: '/menu', label: 'Menu', multiline: false },
-    { id: 'christmas', path: '/christmas', label: 'Christmas', multiline: false },
-    { id: 'offers', path: '/offers', label: 'Offers', multiline: false },
-    { id: 'whats-on', path: '/whats-on', label: "What's On", multiline: true, line1: "What's", line2: "On" },
-    { id: 'reservations', path: '/reservations', label: 'Reservations', multiline: false },
-    { id: 'party-venue', path: '/party-venue', label: 'Party Venue', multiline: true, line1: "Party", line2: "Venue" },
-    { id: 'contact', path: '/contact', label: 'Contact', multiline: false }
-  ];
+  }, [menuOpen]);
 
   const handleNavClick = () => {
-    setMobileMenuOpen(false);
+    setMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <>
-      <header className="sticky top-0 z-[1000] bg-navy-header border-t border-black border-b border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.25)] transition-all">
-        <div className="w-full max-w-[1240px] mx-auto px-6 flex items-center justify-between h-[74px]">
-          {/* Logo & Brand Identity */}
-          <NavLink
-            to="/"
-            className="flex items-center gap-3 no-underline shrink-0"
-            onClick={handleNavClick}
-          >
-            <img
-              src="/assets/logo_thumb_sharp.png"
-              alt="The White Lion Interior"
-              className="w-8 h-[38px] object-cover rounded-[2px] shadow-[0_2px_6px_rgba(0,0,0,0.4)]"
-              onError={(e) => {
-                e.target.src = '/assets/logo_thumbnail.png';
-              }}
-            />
-            <div className="flex flex-col">
-              <div className="flex flex-col font-brand text-[0.76rem] font-medium tracking-[0.32em] text-white leading-[1.15] uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-                <span>THE</span>
-                <span>WHITE</span>
-                <span>LION</span>
-              </div>
-              <span className="font-sans text-[0.54rem] font-bold tracking-[0.16em] text-maroon uppercase mt-[3px]">
-                AMERSHAM • LITTLE CHALFONT
-              </span>
-            </div>
-          </NavLink>
-
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-4 xl:gap-5 list-none">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.id}
-                to={item.path}
-                className={({ isActive }) =>
-                  clsx(
-                    'inline-flex flex-col items-center justify-center text-sm font-medium tracking-[0.02em] px-0.5 py-1.5 relative transition-all no-underline text-center rounded-sm',
-                    isActive ? 'text-white' : 'text-white/90 hover:text-maroon'
-                  )
-                }
-                onClick={handleNavClick}
-              >
-                {({ isActive }) => (
-                  <>
-                    {item.multiline ? (
-                      <span className="flex flex-col leading-[1.15] text-[0.82rem] text-center">
-                        <span>{item.line1}</span>
-                        <span>{item.line2}</span>
-                      </span>
-                    ) : (
-                      <span>{item.label}</span>
-                    )}
-                    {isActive && (
-                      <div className="absolute -bottom-1 left-0 w-full h-[2px] bg-maroon rounded-[1px]" />
-                    )}
-                  </>
-                )}
-              </NavLink>
-            ))}
-          </nav>
-
-          {/* Action CTAs */}
-          <div className="hidden md:flex items-center gap-2.5 shrink-0">
+      <header className="sticky top-0 z-[1000] bg-navy-header border-t border-black border-b border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
+        <div className="w-full max-w-[1240px] mx-auto px-6 grid grid-cols-[1fr_auto_1fr] items-center h-[74px]">
+          {/* Left: single hamburger trigger — the only nav entry point */}
+          <div className="flex justify-start">
+            {/* min-h/w-11 (44px) — the most-tapped element on every page of
+                an installable app needs a real thumb target, not just the
+                icon+padding size that happened to result from the layout. */}
             <button
-              className="inline-flex items-center gap-2 bg-[#f0f0f0] text-[#172534] border-none rounded-[5px] px-3.5 py-1.5 cursor-pointer transition-all shadow-[0_2px_6px_rgba(0,0,0,0.15)] hover:bg-white hover:shadow-[0_4px_12px_rgba(255,255,255,0.25)] hover:-translate-y-[1px]"
-              onClick={onOpenBooking}
-              title="Make a Table Booking"
+              className="inline-flex items-center justify-center gap-2 min-h-11 min-w-11 bg-transparent text-white border-none cursor-pointer -ml-2 pr-2"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+              aria-expanded={menuOpen}
             >
-              <CalendarCheck size={14} className="shrink-0" />
-              <div className="flex flex-col items-start leading-[1.15] text-[0.76rem] font-bold">
-                <span>Make a</span>
-                <span>Booking</span>
-              </div>
+              <Menu size={22} />
+              <span className="hidden sm:inline text-xs font-semibold tracking-[0.1em] uppercase">Menu</span>
             </button>
-            <a
-              href={siteData.info.phoneHref}
-              className="inline-flex items-center gap-2 bg-transparent text-white border border-white/75 rounded-[5px] px-3.5 py-1 cursor-pointer transition-all no-underline hover:bg-white/10 hover:border-white hover:-translate-y-[1px]"
-              title="Call The White Lion direct"
-            >
-              <Phone size={13} className="shrink-0" />
-              <div className="flex flex-col items-start leading-[1.15] text-[0.76rem] font-semibold">
-                <span>01494</span>
-                <span>766 849</span>
-              </div>
-            </a>
           </div>
 
-          {/* Mobile Hamburger Toggle */}
-          <button
-            className="lg:hidden bg-transparent text-white text-2xl p-2 cursor-pointer border-none"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle navigation menu"
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* Center: wordmark, always the visual anchor */}
+          <NavLink to="/" className="flex items-center no-underline shrink-0" onClick={handleNavClick}>
+            <img
+              src="/assets/logo-navbar.png"
+              alt="The White Lion"
+              className="h-10 md:h-12 w-auto object-contain"
+            />
+          </NavLink>
+
+          {/* Right: one action */}
+          <div className="flex justify-end">
+            <Button variant="primary" size="sm" icon={CalendarCheck} onClick={onOpenBooking} className="min-h-11">
+              <span className="hidden sm:inline">Book a Table</span>
+            </Button>
+          </div>
         </div>
       </header>
 
-      {/* Mobile Slide-out Drawer */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/65 backdrop-blur-[4px] z-[1040]"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-      <aside
-        className={`fixed top-0 right-0 w-[84%] max-w-[360px] h-screen bg-dark-navy shadow-[-10px_0_30px_rgba(0,0,0,0.6)] z-[1050] flex flex-col px-6 py-7 transition-transform duration-300 overflow-y-auto ${
-          mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+      {/* Nav Drawer — the site's one navigation surface, at every width.
+          Backdrop is always mounted (not `{menuOpen && ...}`) so its own
+          opacity transition can actually run in lockstep with the <aside>
+          drawer's transform transition below — both use duration-300. */}
+      <div
+        className={`fixed inset-0 bg-black/65 backdrop-blur-[4px] z-[1040] transition-opacity duration-300 ${
+          menuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
+        onClick={() => setMenuOpen(false)}
+        aria-hidden="true"
+      />
+      <aside
+        className={`fixed top-0 left-0 w-[86%] max-w-[380px] h-screen bg-navy-800 shadow-[10px_0_30px_rgba(0,0,0,0.6)] z-[1050] flex flex-col px-7 py-7 transition-transform duration-300 overflow-y-auto ${
+          menuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        aria-hidden={!menuOpen}
       >
-        <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/12">
-          <div className="flex flex-col">
-            <div className="flex flex-col font-brand text-base font-medium tracking-[0.32em] text-white leading-[1.15] uppercase">
-              <span>THE</span>
-              <span>WHITE</span>
-              <span>LION</span>
-            </div>
-            <span className="font-sans text-[0.54rem] font-bold tracking-[0.16em] text-maroon uppercase mt-[3px]">
-              AMERSHAM • LITTLE CHALFONT
-            </span>
-          </div>
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/12">
+          <span className="font-brand text-lg font-medium tracking-[0.28em] text-white uppercase">
+            The White Lion
+          </span>
           <button
-            className="bg-black/40 text-white border border-white/10 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-black/60 transition-colors"
-            onClick={() => setMobileMenuOpen(false)}
+            className="bg-black/40 text-white border border-white/25 min-w-11 min-h-11 flex items-center justify-center cursor-pointer hover:bg-black/60 transition-colors"
+            onClick={() => setMenuOpen(false)}
+            aria-label="Close menu"
           >
             <X size={20} />
           </button>
         </div>
 
-        <ul className="list-none flex flex-col gap-4 mb-8">
-          {navItems.map((item) => (
-            <li key={item.id}>
+        <ul className="list-none flex flex-col gap-1 mb-8">
+          {NAV_ITEMS.map((item) => (
+            <li key={item.path}>
               <NavLink
                 to={item.path}
+                end={item.path === '/'}
                 className={({ isActive }) =>
                   clsx(
-                    'flex items-center justify-between text-lg font-serif tracking-[0.05em] py-2 no-underline',
+                    'flex items-center justify-between text-lg font-brand tracking-[0.02em] py-2.5 no-underline border-b border-white/5',
                     isActive ? 'text-maroon' : 'text-white hover:text-maroon'
                   )
                 }
@@ -184,26 +131,23 @@ export default function Navbar({ onOpenBooking }) {
         </ul>
 
         <div className="flex flex-col gap-3 mt-auto">
-          <button
-            className="inline-flex items-center justify-center gap-2 w-full p-3 bg-[#f0f0f0] text-[#172534] border-none rounded-[5px] cursor-pointer shadow-[0_2px_6px_rgba(0,0,0,0.15)] hover:bg-white transition-all"
+          <Button
+            variant="primary"
+            className="w-full"
+            icon={CalendarCheck}
             onClick={() => {
-              setMobileMenuOpen(false);
+              setMenuOpen(false);
               onOpenBooking();
             }}
           >
-            <CalendarCheck size={16} />
-            <div className="text-center leading-[1.15] text-[0.76rem] font-bold">
-              <span>Make a Booking</span>
-            </div>
-          </button>
+            Book a Table
+          </Button>
           <a
             href={siteData.info.phoneHref}
-            className="inline-flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-white border border-white/75 rounded-[5px] cursor-pointer no-underline hover:bg-white/10 transition-all"
+            className="inline-flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-white border-2 border-white/50 cursor-pointer no-underline hover:bg-white/10 transition-colors"
           >
             <Phone size={14} />
-            <div className="text-center leading-[1.15] text-[0.76rem] font-semibold">
-              <span>Call 01494 766 849</span>
-            </div>
+            <span className="text-sm font-semibold">Call {siteData.info.phone}</span>
           </a>
         </div>
       </aside>

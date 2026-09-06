@@ -1,92 +1,83 @@
 import React from 'react';
-import { CalendarCheck, Phone, Clock } from 'lucide-react';
+import { Phone } from 'lucide-react';
 import { siteData } from '../data/siteData';
 import { useSEO } from '../hooks/useSEO';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
-import CtaBanner from '../components/CtaBanner';
 
+// This whole page is one board, not a hero-plus-photo-grid — the deals
+// are set out the way they'd actually be chalked up behind the bar: a
+// day, a name, a line about it, a price, no photography at all. That's
+// also the honest fix for a problem the photo-card version of this page
+// ran into: the supplied offer graphics carry their own baked-in
+// lettering, so overlaying more text on them read as noise, not editorial
+// polish. A board that was never going to have photos on it sidesteps
+// that entirely instead of working around it.
 export default function OffersPage({ onOpenBooking }) {
   useSEO({
     title: 'Daily Deals & Special Offers',
     description: 'Discover daily deals at The White Lion Amersham — Cask Ale Mondays, Fizz Fridays, 2-for-£15 cocktails, and more. Great value food and drink offers every day of the week.',
     path: '/offers',
   });
+
   return (
-    <div>
-      {/* Page Header — image+text split instead of another full centered
-          navy block, using a real offer photo rather than a flat gradient. */}
-      <section className="bg-dark-navy text-white border-b border-black overflow-hidden">
-        <div className="w-full max-w-[1240px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center py-14 lg:py-0">
-          <div>
-            <Badge variant="plain" tone="gold" onDark className="mb-3">
-              Exclusive Deals &amp; Specials
-            </Badge>
-            <h1 className="text-white text-[clamp(2.2rem,4vw,2.9rem)] font-bold mb-4">
-              Delicious Deals For Every Day
-            </h1>
-            <p className="text-[#cbd5e1] text-lg max-w-[520px] leading-[1.6]">
-              From mid-week treats to weekend celebrations, there is always a reason to gather at
-              The White Lion Amersham. Explore our latest food and drink offers below.
-            </p>
-          </div>
-          <div className="relative hidden sm:block h-[220px] lg:h-[320px] rounded-card overflow-hidden">
-            <img src={siteData.offers[0].image} alt="" className="w-full h-full object-cover" loading="lazy" />
-            <div className="absolute inset-0 bg-gradient-to-t from-navy-900/70 to-transparent" />
-          </div>
-        </div>
+    <div className="bg-navy-900">
+      {/* Header — no photo, no split grid; the board starts right here */}
+      <section className="border-b border-white/10 py-16 px-6 text-center">
+        <Badge variant="plain" tone="neutral" onDark className="mb-3">
+          Chalked Up Behind The Bar
+        </Badge>
+        <h1 className="text-white text-[clamp(2.2rem,4vw,2.9rem)] font-bold mb-4">
+          This Week's Board
+        </h1>
+        <p className="text-text-muted-on-dark text-lg max-w-[560px] mx-auto leading-[1.6]">
+          Same six deals, every week, rain or shine. Nothing rotates off unless we run out of chalk.
+        </p>
       </section>
 
-      <div className="w-full max-w-[1240px] mx-auto px-6 py-[60px] pb-20">
-        {/* Bento: the first offer is featured at 2x width instead of a
-            perfectly uniform 6-card grid. */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="w-full max-w-[860px] mx-auto px-6 py-20">
+        {/* The ledger — day, name, one line, price. Dashed rules stand in
+            for a chalk line drawn under each entry. */}
+        <div className="flex flex-col">
           {siteData.offers.map((offer, idx) => (
             <div
               key={offer.id}
-              className={`bg-white rounded-card overflow-hidden shadow-card transition-shadow hover:shadow-lg border border-[#f3f4f6] flex flex-col group ${idx === 0 ? 'lg:col-span-2' : ''}`}
+              className={`flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 py-6 border-b border-dashed border-white/20 ${idx === 0 ? 'pt-0' : ''}`}
             >
-              <div className={`relative overflow-hidden ${idx === 0 ? 'h-[220px] sm:h-[260px]' : 'h-[220px]'}`}>
-                <img src={offer.image} alt={offer.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
-                <span className="absolute top-4 right-4 bg-book-table text-white px-3 py-1 rounded text-xs font-bold tracking-[0.05em] uppercase shadow-control">
-                  {offer.badge}
-                </span>
+              <div className="sm:flex-1">
+                <span className="text-gold-text-dark text-xs font-bold uppercase tracking-[0.1em]">{offer.day}</span>
+                <h2 className="font-brand text-2xl text-white font-bold leading-tight mt-0.5">{offer.title}</h2>
+                <p className="text-white/70 text-md leading-[1.5] mt-1 max-w-[440px]">{offer.desc}</p>
               </div>
-              <div className={`p-6 flex flex-col flex-1 ${idx === 0 ? 'sm:flex-row sm:items-center sm:gap-8' : ''}`}>
-                <div className="flex-1">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <Clock size={14} className="text-maroon" />
-                    <span className="text-xs font-bold text-maroon uppercase">{offer.day}</span>
-                  </div>
-                  <h3 className="text-[1.4rem] mb-2 text-black font-bold">{offer.title}</h3>
-                  <p className="text-sm text-[#656b73] leading-[1.5]">{offer.desc}</p>
-                </div>
-                <div className={idx === 0 ? 'sm:shrink-0 mt-4 sm:mt-0' : 'mt-auto pt-6'}>
-                  <Button variant="primary" className={idx === 0 ? '' : 'w-full'} onClick={onOpenBooking}>
-                    Book Your Table
-                  </Button>
-                </div>
+              <div className="flex items-center gap-4 shrink-0 sm:pl-6">
+                <span className="font-brand text-xl font-bold text-white whitespace-nowrap">{offer.badge}</span>
+                <Button variant="primary" size="sm" onClick={onOpenBooking} className="whitespace-nowrap">
+                  Book
+                </Button>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Bottom Banner Callout */}
-        <div className="mt-10">
-          <CtaBanner
-            variant="flat"
-            title="Have a Large Party or Celebration?"
-            description="We offer bespoke packages for groups of 10 or more, including bottomless brunch and private dining."
-          >
+        {/* Closing note — a paper docket pinned to the board, echoing
+            What's On's noticeboard motif in a lighter touch (one card, not
+            a whole page of them) so the two pages feel like the same
+            place without repeating the same layout. */}
+        <div className="mt-16 bg-white shadow-panel p-8 md:p-10 text-center rotate-[-0.6deg]">
+          <h3 className="font-brand text-2xl font-bold text-black mb-2">Have a Large Party or Celebration?</h3>
+          <p className="text-text-muted mb-6 max-w-[480px] mx-auto">
+            We offer bespoke packages for groups of 10 or more, including bottomless brunch and private dining.
+          </p>
+          <div className="flex flex-wrap gap-3 justify-center">
             <Button variant="navy" onClick={onOpenBooking}>Reserve Group Table</Button>
             <a
               href={siteData.info.phoneHref}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold tracking-[0.03em] rounded-control transition-all bg-transparent text-white border border-white/75 hover:bg-white/10 hover:border-white no-underline"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold tracking-[0.03em] rounded-control transition-colors bg-transparent text-black border-2 border-black hover:bg-black hover:text-white no-underline"
             >
               <Phone size={14} />
               <span>Call Us Direct</span>
             </a>
-          </CtaBanner>
+          </div>
         </div>
       </div>
     </div>

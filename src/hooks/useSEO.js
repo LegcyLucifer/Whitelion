@@ -5,9 +5,55 @@
  * Lighthouse flags: document-title, meta-description, structured-data
  */
 import { useEffect } from 'react';
+import { siteData } from '../data/siteData';
 
 const SITE_NAME = 'The White Lion Amersham';
 const BASE_URL  = 'https://thewhitelionamersham.co.uk';
+
+// JSON-LD facts (telephone, email, hours, social links) previously lived
+// here as a second, hand-typed copy of siteData.info / siteData.openingHours
+// and had drifted from it — wrong email domain, Sat/Sun hours merged with
+// Friday's, and social handles pointing at different accounts than the
+// ones actually linked from the Footer. Derived from siteData below so
+// there's one source of truth for facts Google reads as well as facts
+// people see.
+function to24h(str) {
+  const m = str.trim().match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = m[2];
+  const ap = m[3].toUpperCase();
+  if (ap === 'PM' && h !== 12) h += 12;
+  if (ap === 'AM' && h === 12) h = 0;
+  return `${String(h).padStart(2, '0')}:${min}`;
+}
+
+const FULL_DAY_NAMES = {
+  Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday',
+  Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday',
+};
+const WEEK_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+function expandDayNames(daysStr) {
+  const parts = daysStr.split('-').map((s) => s.trim().slice(0, 3));
+  if (parts.length === 1) return [FULL_DAY_NAMES[parts[0]]];
+  const start = WEEK_ORDER.indexOf(parts[0]);
+  const end = WEEK_ORDER.indexOf(parts[1]);
+  return WEEK_ORDER.slice(start, end + 1).map((d) => FULL_DAY_NAMES[d]);
+}
+
+const OPENING_HOURS_SPEC = siteData.openingHours.map((row) => {
+  const [openStr, closeStr] = row.hours.split('-').map((s) => s.trim());
+  return {
+    '@type': 'OpeningHoursSpecification',
+    dayOfWeek: expandDayNames(row.days),
+    opens: to24h(openStr),
+    closes: to24h(closeStr) === '00:00' ? '23:59' : to24h(closeStr),
+  };
+});
+
+const [addressLine1, addressCity, addressPostcode] = siteData.info.address.split(',').map((s) => s.trim());
+const PHONE_E164 = `+44${siteData.info.phone.replace(/\D/g, '').replace(/^0/, '')}`;
 
 export function useSEO({ title, description, path = '/', image }) {
   useEffect(() => {
@@ -76,8 +122,8 @@ export function useSEO({ title, description, path = '/', image }) {
       '@type':      'BarOrPub',
       name:         SITE_NAME,
       url:          BASE_URL,
-      telephone:    '+441494766849',
-      email:        'thewhitelionamersham@gmail.com',
+      telephone:    PHONE_E164,
+      email:        siteData.info.email,
       image:        ogImage,
       description:  fullDesc,
       priceRange:   '££',
@@ -86,10 +132,10 @@ export function useSEO({ title, description, path = '/', image }) {
       servesCuisine:      ['Indian', 'British', 'Pub Food'],
       address: {
         '@type':          'PostalAddress',
-        streetAddress:    'White Lion Road',
-        addressLocality:  'Amersham',
+        streetAddress:    addressLine1,
+        addressLocality:  addressCity,
         addressRegion:    'Buckinghamshire',
-        postalCode:       'HP7 9LJ',
+        postalCode:       addressPostcode,
         addressCountry:   'GB',
       },
       geo: {
@@ -97,17 +143,13 @@ export function useSEO({ title, description, path = '/', image }) {
         latitude:   51.6704,
         longitude:  -0.5974,
       },
-      openingHoursSpecification: [
-        { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday','Tuesday','Wednesday','Thursday'], opens: '12:00', closes: '23:00' },
-        { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Friday','Saturday'],                       opens: '12:00', closes: '00:00' },
-        { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Sunday'],                                  opens: '12:00', closes: '22:00' },
-      ],
-      hasMap:    'https://maps.google.com/maps?q=White+Lion+Road,+Amersham+HP7+9LJ',
+      openingHoursSpecification: OPENING_HOURS_SPEC,
+      hasMap:    siteData.info.mapsUrl,
       sameAs: [
-        'https://www.facebook.com/thewhitelionamersham',
-        'https://www.instagram.com/thewhitelionamersham',
-        'https://www.tiktok.com/@whitelionamersham',
-        'https://www.tripadvisor.co.uk/Restaurant_Review-g186297-d782349-Reviews-The_White_Lion-Amersham_Buckinghamshire_England.html',
+        siteData.info.facebookUrl,
+        siteData.info.instagramUrl,
+        siteData.info.tiktokUrl,
+        siteData.info.tripAdvisorUrl,
       ],
     });
   }, [title, description, path, image]);
