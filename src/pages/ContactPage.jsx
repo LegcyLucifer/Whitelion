@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion, useAnimation } from 'framer-motion';
 import { Phone, Mail, MapPin, Clock, CheckCircle, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Button from '../components/Button';
 import FieldError from '../components/FieldError';
 import { siteData } from '../data/siteData';
@@ -8,6 +9,7 @@ import { useSEO } from '../hooks/useSEO';
 import { fieldCls, labelCls } from '../lib/formStyles';
 import { isValidEmail, isRequired } from '../lib/validation';
 import { shakeAnimation } from '../lib/motion';
+import { submitEnquiry } from '../lib/api';
 
 // Every key is always present (explicit `undefined` for a passing field,
 // not an absent key) — callers merge this with `{...prev, ...validate()}`,
@@ -71,7 +73,7 @@ export default function ContactPage({ showToast }) {
     setErrors((prev) => ({ ...prev, ...validate(formData) }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
     const validationErrors = validate(formData);
@@ -85,12 +87,17 @@ export default function ContactPage({ showToast }) {
       return;
     }
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      await submitEnquiry({ kind: 'contact', ...formData });
       if (!isMounted.current) return;
       setIsSubmitting(false);
       setFormSent(true);
       showToast('Thank you for contacting The White Lion Amersham. We will reply promptly!');
-    }, 700);
+    } catch (err) {
+      if (!isMounted.current) return;
+      setIsSubmitting(false);
+      showToast(err.message || 'Could not send your message — please try again or call us.', 'error');
+    }
   };
 
   return (
@@ -244,6 +251,13 @@ export default function ContactPage({ showToast }) {
                     <FieldError>{touched.message && errors.message}</FieldError>
                   </div>
 
+                  <p className="text-center text-xs text-text-muted">
+                    By submitting this form you agree to our{' '}
+                    <Link to="/privacy-policy" className="text-navy-700 font-semibold hover:underline">
+                      Privacy Policy
+                    </Link>.
+                  </p>
+
                   <Button
                     type="submit"
                     aria-label="Send your message to The White Lion"
@@ -330,8 +344,20 @@ export default function ContactPage({ showToast }) {
               </div>
             </div>
 
-            {/* Map Pin Box */}
+            {/* Map Pin Box — the exterior shot pairs recognition with
+                wayfinding in one card: know what you're driving up to,
+                then how to get there. 3:2 crop matches this photo's real
+                proportions (1400x933), so this is a clean crop, not a
+                distorted stretch. */}
             <div className="bg-white overflow-hidden border-2 border-neutral-200">
+              <div className="aspect-[3/2] overflow-hidden">
+                <img
+                  src="/assets/pub_exterior_real.jpg"
+                  alt="The White Lion Amersham's building front, with its hanging lion-crest sign and flower baskets"
+                  loading="lazy"
+                  className="w-full h-full object-cover"
+                />
+              </div>
               <iframe
                 title="The White Lion Amersham Map"
                 src="https://maps.google.com/maps?q=White+Lion+Road,+Amersham+HP7+9LJ&t=&z=15&ie=UTF8&iwloc=&output=embed"

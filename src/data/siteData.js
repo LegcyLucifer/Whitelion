@@ -155,11 +155,6 @@ export const siteData = {
       title: "Crispy Whitebait with Tartare Dip",
       category: "Starters",
       image: "/assets/food_dish_2.jpg"
-    },
-    {
-      title: "Handmade Event Buffet & Mini Quiches",
-      category: "Party Hire",
-      image: "/assets/venue_party_1.jpg"
     }
   ],
 
@@ -250,7 +245,8 @@ export const siteData = {
     },
     sports: {
       title: "Live Sports on Sky Sports & TNT Sports",
-      desc: "Watch the Premier League, Champions League, Formula 1, Six Nations Rugby, and Cricket live on our crystal clear screens with great pub atmosphere."
+      desc: "Watch the Premier League, Champions League, Formula 1, Six Nations Rugby, and Cricket live on our crystal clear screens with great pub atmosphere.",
+      image: "/assets/whats-on-sports-lounge.jpg"
     },
     darts: {
       title: "Throwing Darts",

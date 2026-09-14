@@ -1,20 +1,27 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import clsx from 'clsx';
-import { Search, CalendarCheck, Clock, ChevronRight, Flame, Info } from 'lucide-react';
+import { Search, CalendarCheck, Clock, ChevronRight, Flame, Info, ChefHat, Leaf, WheatOff } from 'lucide-react';
 import { siteData } from '../data/siteData';
 import { menuData, computeToday, ALLERGEN_LEGEND } from '../data/menuData';
 import { useSEO } from '../hooks/useSEO';
 import Button from '../components/Button';
+import LionMark from '../components/LionMark';
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
 const DIETARY_FILTERS = [
   { id: 'all',   label: 'All Items' },
-  { id: 'veg',   label: 'Vegetarian' },
-  { id: 'vegan', label: 'Vegan' },
-  { id: 'gf',    label: 'No gluten listed' },
-  { id: 'spicy', label: 'Contains chilli' },
+  { id: 'veg',   label: 'Vegetarian', icon: Leaf },
+  { id: 'vegan', label: 'Vegan', icon: Leaf },
+  { id: 'gf',    label: 'No gluten listed', icon: WheatOff },
+  { id: 'spicy', label: 'Contains chilli', icon: Flame },
 ];
+
+// Derived tags dish() already builds from isVeg/isVegan/hasGluten — DishRow
+// renders these three as icon+label chips instead, from the raw booleans.
+// Any OTHER custom tag (opts.tags) still renders here as plain text, so it
+// doesn't silently disappear just because it isn't one of the three known ones.
+const KNOWN_DERIVED_TAGS = ['Vegan (VG)', 'Vegetarian (V)', 'No gluten listed'];
 
 // Was three copies of the same predicate (SectionBlock, StandardMenuTab,
 // PrivateDiningTab) — one definition now.
@@ -30,17 +37,37 @@ function matchesFilters(dish, filter, query) {
   return true;
 }
 
+// A small icon + tracked-caption chip — the visual unit dietary tags and
+// the filter row above share, so "vegan," "no gluten listed," etc. read as
+// one consistent glanceable language wherever they appear on this page.
+function DietaryTag({ icon: Icon, label }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-semibold tracking-[0.09em] uppercase text-navy-700/60">
+      <Icon size={12} className="shrink-0" aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
 // A menu line, not a card — name and price share a baseline the way they
-// would on a printed menu, dietary tags are a quiet tracked caption rather
-// than a row of coloured pills, and there's no box, shadow, or hover-lift
+// would on a printed menu, and there's no box, shadow, or hover-lift
 // implying these are clickable. Matches the printed-menu convention this
 // page's earlier card-grid treatment (shadow-sm, rounded corners, hover
 // translate) had drifted away from — the rest of the site had already
 // moved off that "SaaS card grid" shape (see Home's highlights strip,
 // Party Venue's numbered packages) but this page hadn't.
+//
+// Two icons, deliberately different in placement and strength: `isChilli`
+// (existing) trails the name, muted — a modifier on an otherwise normal
+// dish. `isSignature` (new) leads the name, full-strength maroon — "read
+// this one first," not a warning. Keeping them visually distinct keeps
+// each one meaningful instead of two icons doing the same job.
 function DishRow({ dish }) {
+  const extraTags = (dish.tags || []).filter((t) => !KNOWN_DERIVED_TAGS.includes(t));
+  const hasDietaryRow = dish.isVegan || dish.isVeg || dish.hasGluten === false || extraTags.length > 0;
+
   return (
-    <div className="break-inside-avoid border-b border-dashed border-neutral-200 py-4 first:pt-0 last:border-b-0">
+    <div className="border-b border-neutral-200 py-5 first:pt-0 last:border-b-0">
       {/* flex-wrap + a floor on the name — most dishes have a short single
           price ("£12.95") that always fits inline, but multi-tier prices
           ("125ml £4.80 / 175ml £6.20 / 250ml £8.20", or "Pint £4.80 / Half
@@ -58,18 +85,39 @@ function DishRow({ dish }) {
           needing to shrink, so their layout is unaffected. */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
         <h3 className="font-brand text-lg font-bold text-black leading-snug flex items-center gap-1.5 min-w-[140px]">
+          {dish.isSignature && <ChefHat size={13} className="text-maroon shrink-0" title="Chef's signature dish" />}
           <span>{dish.name}</span>
           {dish.isChilli && <Flame size={13} className="text-maroon/60 shrink-0" title="Contains chilli" />}
         </h3>
         <span className="font-brand text-lg font-bold text-maroon">{dish.price}</span>
       </div>
       {dish.desc && (
-        <p className="text-sm text-text-muted leading-[1.5] mt-1 pr-2">{dish.desc}</p>
-      )}
-      {dish.tags && dish.tags.length > 0 && (
-        <p className="text-xs font-semibold tracking-[0.09em] uppercase text-navy-700/60 mt-1.5">
-          {dish.tags.join(' · ')}
+        <p
+          className={clsx(
+            'text-sm text-text-muted leading-[1.5] mt-1 pr-2',
+            // Reserved for the curated signature set only — italic serif
+            // reads beautifully for 1-3 standout dishes but is measurably
+            // harder to scan at speed across a 150-dish menu, so it isn't
+            // the default treatment (also: Libre Franklin's italic cut
+            // isn't loaded, only Fraunces's — this couldn't be a sitewide
+            // "just tilt the existing font" change even if it were wanted).
+            dish.isSignature && 'font-brand italic text-[0.9375rem] text-black/70'
+          )}
+        >
+          {dish.desc}
         </p>
+      )}
+      {hasDietaryRow && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+          {dish.isVegan && <DietaryTag icon={Leaf} label="Vegan" />}
+          {!dish.isVegan && dish.isVeg && <DietaryTag icon={Leaf} label="Vegetarian" />}
+          {dish.hasGluten === false && <DietaryTag icon={WheatOff} label="No gluten listed" />}
+          {extraTags.map((t) => (
+            <span key={t} className="text-xs font-semibold tracking-[0.09em] uppercase text-navy-700/60">
+              {t}
+            </span>
+          ))}
+        </div>
       )}
       {dish.allergens && dish.allergens.length > 0 && (
         <p className="text-xs text-text-muted mt-1">Contains: {dish.allergens.join(', ')}</p>
@@ -88,19 +136,70 @@ function SectionBlock({ section, filter, query, getDish }) {
 
   if (dishes.length === 0) return null;
 
+  // The reference's own "Beverages" block pairs one photo with a genuinely
+  // SHORT list beside it (2x2 of one-line tea entries) — never a photo next
+  // to a full, long column. It can do that because it's a print template
+  // with fixed content the designer chose to balance. A real 6-7 dish list
+  // can't be shortened to fit a photo without inventing or cutting real
+  // menu content, so instead: pair the photo with just its first few dishes
+  // (roughly matching a square photo's height), and let the rest of the
+  // section's dishes continue in the same full-width two-column grid every
+  // other section already uses below it. Nothing is ever forced to match
+  // another block's height, so this can't reproduce either earlier bug
+  // (misalignment, or a dead gap once a longer list outran a shorter photo).
+  const PAIRED_COUNT = 3;
+  const paired = section.image ? dishes.slice(0, PAIRED_COUNT) : [];
+  const rest = section.image ? dishes.slice(PAIRED_COUNT) : dishes;
+
+  // Same deterministic split as always, just applied to whichever dishes
+  // aren't already sitting beside the photo — see plans/ for why this isn't
+  // CSS `columns` (can't be art-directed, stray gaps at the foot of a column).
+  const half = Math.ceil(rest.length / 2);
+  const col1 = rest.slice(0, half);
+  const col2 = rest.slice(half);
+  const showTwoCols = col2.length > 0;
+
   return (
-    <div className="mb-12">
-      <h2 className="font-brand text-xl font-bold text-black mb-1.5">
+    <div className="mb-16">
+      <h2 className="font-brand text-2xl font-bold text-black mb-2">
         {section.name}
       </h2>
-      <div className="w-10 h-[2px] bg-maroon/50 mb-5" />
-      {/* CSS columns, not a grid of cards — dishes flow down one column
-          then the next, the way a printed two-column menu sets type,
-          instead of pairing items into equal-height rows regardless of
-          how long each description runs. */}
-      <div className="columns-1 md:columns-2 gap-x-12">
-        {dishes.map((d, i) => <DishRow key={i} dish={getDish ? getDish(d) : d} />)}
-      </div>
+      <div className="w-12 h-[2px] bg-maroon/50 mb-6" />
+      {section.image && (
+        <div className="mb-8 sm:flex sm:gap-8 sm:items-start">
+          <div className="relative w-full sm:w-[260px] aspect-square shrink-0 overflow-hidden mb-6 sm:mb-0">
+            <img
+              src={section.image}
+              alt={section.imageAlt || section.name}
+              loading="lazy"
+              className="w-full h-full object-cover"
+            />
+            {/* Same caption convention already used on Party Venue's venue
+                photos — bottom gradient + a short italic line — rather than
+                a new treatment invented just for this page. */}
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3.5 py-2.5">
+              <span className="font-brand italic text-white text-sm">
+                From Our {section.name}
+              </span>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-1 sm:min-w-0">
+            {paired.map((d, i) => <DishRow key={`p-${i}`} dish={getDish ? getDish(d) : d} />)}
+          </div>
+        </div>
+      )}
+      {rest.length > 0 && (
+        <div className={clsx('grid grid-cols-1 items-start', showTwoCols && 'md:grid-cols-2')}>
+          <div className={clsx('flex flex-col', showTwoCols && 'md:pr-8')}>
+            {col1.map((d, i) => <DishRow key={`c1-${i}`} dish={getDish ? getDish(d) : d} />)}
+          </div>
+          {showTwoCols && (
+            <div className="flex flex-col md:border-l md:border-neutral-200 md:pl-8">
+              {col2.map((d, i) => <DishRow key={`c2-${i}`} dish={getDish ? getDish(d) : d} />)}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -308,6 +407,12 @@ export default function MenuPage({ onOpenBooking }) {
     title: 'Food & Drink Menu — Indian & British Cuisine',
     description: 'Explore The White Lion Amersham’s full menu: authentic Indian curries, British pub classics, handmade pizzas and burgers, Sunday roasts, junior menu, drinks, and private dining.',
     path: '/menu',
+    // A link to /menu shared on WhatsApp/Facebook/etc. otherwise falls back
+    // to the sitewide default (the building exterior) — real food converts
+    // better than a building photo when someone's deciding whether to tap
+    // a link about food. Must be a full absolute URL: useSEO uses `image`
+    // as-is with no BASE_URL prefixing, unlike its own internal default.
+    image: 'https://thewhitelionamersham.co.uk/assets/food_dish_3.jpg',
   });
 
   // Reset filter/query on tab change
@@ -327,6 +432,17 @@ export default function MenuPage({ onOpenBooking }) {
           found elsewhere on this page's original badge). */}
       <section className="bg-navy-800 text-white py-10 px-6 text-center relative border-b border-black overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-navy-950/60 to-navy-800/90" />
+        {/* The lion's other moment — Home's watermark is framed as the
+            sitewide "one big moment," so this is the deliberate exception,
+            not a pattern: a second, equally restrained use on the same dark
+            navy surface, once, on this page's own hero. Never repeated per
+            section below (see SectionBlock). */}
+        <LionMark
+          size={260}
+          color="#ffffff"
+          strokeWidth={0.8}
+          className="absolute -right-16 top-1/2 -translate-y-1/2 opacity-[0.07] pointer-events-none hidden lg:block"
+        />
         <div className="w-full max-w-[1240px] mx-auto relative z-10">
           <div className={clsx(
             'inline-flex items-center gap-2 mb-4 px-4 py-1.5 text-sm font-semibold',
@@ -337,11 +453,11 @@ export default function MenuPage({ onOpenBooking }) {
             <span className={clsx('w-2 h-2 rounded-full', today.kitchenOpen ? 'bg-success' : 'bg-caution')} />
             {today.kitchenOpen ? `Kitchen open now · closes ${today.closesAt}` : `Kitchen closed · opens ${today.opensAt}`}
           </div>
-          <h1 className="text-white text-[clamp(2.4rem,4.5vw,3.2rem)] font-bold mb-3 drop-shadow-md tracking-[-0.015em]">
+          <h1 className="text-white text-[clamp(2.4rem,4.5vw,3.4rem)] font-bold mb-3 drop-shadow-md tracking-[-0.015em]">
             Food &amp; Drink at The White Lion
           </h1>
-          <p className="text-text-muted-on-dark text-lg max-w-[680px] mx-auto leading-[1.6]">
-            Authentic Indian cuisine and traditional British pub classics — all under one roof in Amersham.
+          <p className="text-text-muted-on-dark text-lg max-w-[700px] mx-auto leading-[1.6]">
+            One kitchen, two traditions — Indian curries and British pub classics, cooked to the same standard, under one roof in Amersham.
           </p>
         </div>
       </section>
@@ -396,12 +512,13 @@ export default function MenuPage({ onOpenBooking }) {
                   onClick={() => setFilter(f.id)}
                   aria-pressed={filter === f.id}
                   className={clsx(
-                    'px-3.5 py-1.5 text-xs font-semibold tracking-[0.02em] rounded-control transition-colors border cursor-pointer',
+                    'inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold tracking-[0.02em] rounded-control transition-colors border cursor-pointer',
                     filter === f.id
                       ? 'bg-maroon text-white border-maroon'
                       : 'bg-transparent text-text-muted border-neutral-300 hover:border-maroon/50 hover:text-maroon'
                   )}
                 >
+                  {f.icon && <f.icon size={13} className="shrink-0" />}
                   {f.label}
                 </button>
               ))}

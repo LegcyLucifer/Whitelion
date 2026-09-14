@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion, useAnimation } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Clock, Users, MapPin, CheckCircle, Copy, Check } from 'lucide-react';
 import Button from './Button';
 import FieldError from './FieldError';
@@ -10,6 +11,7 @@ import { fieldCls, labelCls } from '../lib/formStyles';
 import { isValidEmail, isValidPhone, isRequired } from '../lib/validation';
 import { shakeAnimation } from '../lib/motion';
 import { getLocalISODate } from '../lib/date';
+import { submitBooking } from '../lib/api';
 
 // The single reservation form used by both the quick-booking modal (any
 // page, via the Navbar) and the dedicated /reservations page. Those two
@@ -114,7 +116,7 @@ export default function ReservationForm({ showToast, onAfterConfirm }) {
     setErrors((prev) => ({ ...prev, ...validate(formData) }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // Belt-and-braces against a double-fire: the submit button disables
     // itself via `loading`, but that's a render away from taking effect,
@@ -133,18 +135,18 @@ export default function ReservationForm({ showToast, onAfterConfirm }) {
     }
 
     setIsSubmitting(true);
-    // A brief, deliberate delay rather than an instant flip — a booking
-    // confirmation that appears in zero time reads as fake. This is long
-    // enough to register as "it did something," short enough not to feel
-    // like a wait.
-    setTimeout(() => {
+    try {
+      const { reference } = await submitBooking(formData);
       if (!isMounted.current) return;
-      const ref = `WL-${Math.floor(10000 + Math.random() * 90000)}`;
-      setBookingRef(ref);
+      setBookingRef(reference);
       setIsSubmitting(false);
       setStep('confirmed');
-      showToast?.(`Reservation confirmed! Booking ref: ${ref}`);
-    }, 700);
+      showToast?.(`Request received — reference ${reference}`);
+    } catch (err) {
+      if (!isMounted.current) return;
+      setIsSubmitting(false);
+      showToast?.(err.message || 'Could not send your request — please try again or call us.', 'error');
+    }
   };
 
   const handleDone = () => {
@@ -184,14 +186,19 @@ export default function ReservationForm({ showToast, onAfterConfirm }) {
           >
             <CheckCircle size={40} />
           </motion.div>
-          <h2 className="text-2xl mb-2 font-brand font-bold text-black">Reservation Confirmed</h2>
+          <h2 className="text-2xl mb-2 font-brand font-bold text-black">Request Received</h2>
           <p className="text-text-muted mb-6 text-base">
-            We're delighted to welcome you to <strong>{siteData.info.name}</strong>.
+            Thanks, <strong>{formData.name}</strong> — your table isn't locked in until we
+            confirm it. Someone from the team will call or email shortly. Booking for today,
+            or need it sorted right now? Call{' '}
+            <a href={siteData.info.phoneHref} className="text-maroon font-bold hover:underline">
+              {siteData.info.phone}
+            </a>.
           </p>
 
           <div className="border-2 border-maroon/25 p-6 text-left mb-7 bg-warm-cream">
             <div className="flex justify-between items-center mb-2.5 border-b border-maroon/15 pb-2.5">
-              <span className="font-brand italic text-text-muted">Booking reference</span>
+              <span className="font-brand italic text-text-muted">Request reference</span>
               <span className="flex items-center gap-2">
                 <strong className="text-maroon text-lg">{bookingRef}</strong>
                 <button
@@ -346,6 +353,13 @@ export default function ReservationForm({ showToast, onAfterConfirm }) {
               className={`${fieldCls(false)} min-h-[90px] resize-y`}
             />
           </div>
+
+          <p className="text-center text-xs text-text-muted">
+            By submitting this form you agree to our{' '}
+            <Link to="/privacy-policy" className="text-maroon font-semibold hover:underline">
+              Privacy Policy
+            </Link>.
+          </p>
 
           <Button
             type="submit"

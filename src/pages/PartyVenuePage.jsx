@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion, useAnimation } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { CheckCircle, Phone } from 'lucide-react';
 import { siteData } from '../data/siteData';
 import { useSEO } from '../hooks/useSEO';
@@ -12,6 +13,7 @@ import { fieldCls, labelCls } from '../lib/formStyles';
 import { isValidEmail, isValidPhone, isRequired } from '../lib/validation';
 import { shakeAnimation } from '../lib/motion';
 import { getLocalISODate } from '../lib/date';
+import { submitEnquiry } from '../lib/api';
 
 // Every key is always present (explicit `undefined` for a passing field,
 // not an absent key) — callers merge this with `{...prev, ...validate()}`,
@@ -69,11 +71,16 @@ export default function PartyVenuePage({ showToast }) {
     if (!submitted) formControls.start({ opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' } });
   }, [submitted, formControls]);
 
+  // venue_party_1.jpg, venue_buffet_2.jpg, venue_fireplace_room.jpg and
+  // venue_long_table.jpg are deliberately left out of this grid — the
+  // first three turned out to be catering-portfolio photography from a
+  // different business the owner runs, not this pub, and the fourth
+  // shows identifiable guests without consent. Re-add any of them only
+  // once the owner has confirmed a specific one is actually fine to use.
   const venueImages = [
-    { title: "Event Buffet Platters", src: "/assets/venue_party_1.jpg" },
     { title: "Outdoor Terrace & Patio", src: "/assets/pub_patio_garden.jpg" },
     { title: "The White Lion Exterior & Grounds", src: "/assets/interior_dining_2.webp" },
-    { title: "Main Lounge & Screen Area", src: "/assets/interior_dining_3.webp" }
+    { title: "Main Lounge & Screen Area", src: "/assets/interior_dining_3.webp" },
   ];
 
   const handleChange = (field) => (e) => {
@@ -89,7 +96,7 @@ export default function PartyVenuePage({ showToast }) {
     setErrors((prev) => ({ ...prev, ...validate(formData) }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
     const validationErrors = validate(formData);
@@ -103,22 +110,30 @@ export default function PartyVenuePage({ showToast }) {
       return;
     }
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      await submitEnquiry({ kind: 'party_venue', ...formData });
       if (!isMounted.current) return;
       setIsSubmitting(false);
       setSubmitted(true);
       showToast('Your party enquiry has been submitted. Our event coordinator will contact you shortly!');
-    }, 700);
+    } catch (err) {
+      if (!isMounted.current) return;
+      setIsSubmitting(false);
+      showToast(err.message || 'Could not send your enquiry — please try again or call us.', 'error');
+    }
   };
 
   return (
     <div>
       {/* Page Header — a real venue photo instead of a flat navy gradient,
           matching the full-bleed photo-hero idiom already used on Home's
-          atmosphere banner rather than the shared centered-block hero. */}
+          atmosphere banner rather than the shared centered-block hero.
+          Was venue_party_1.jpg (a buffet spread) — pulled after the owner
+          confirmed it's actually from a different business, not this pub.
+          Swapped for the verified beer-garden photo instead. */}
       <section
         className="relative py-20 px-6 text-center border-b border-black bg-cover bg-center"
-        style={{ backgroundImage: 'url(/assets/venue_party_1.jpg)' }}
+        style={{ backgroundImage: 'url(/assets/pub_patio_garden.jpg)' }}
       >
         <div className="absolute inset-0 bg-navy-900/78" />
         <div className="w-full max-w-[1240px] mx-auto relative z-10">
@@ -134,9 +149,9 @@ export default function PartyVenuePage({ showToast }) {
           {/* Was text-text-muted-on-dark (navy-300) — tuned for flat navy
               surfaces (5.9:1), not this section's real background: a photo
               under a 78%-opacity scrim, which still lets bright patches
-              (the pale platters below) through at contrast as low as
-              3.1:1. Matched the h1's own white + drop-shadow treatment,
-              which already holds up against this image. */}
+              through at contrast as low as 3.1:1. Matched the h1's own
+              white + drop-shadow treatment, which already holds up
+              against this image. */}
           <p className="text-white/85 text-lg max-w-[700px] mx-auto leading-[1.6] drop-shadow-md">
             {subtitle} — {desc}
           </p>
@@ -355,6 +370,13 @@ export default function PartyVenuePage({ showToast }) {
                       className={`${fieldCls(false)} min-h-[100px] resize-y`}
                     />
                   </div>
+
+                  <p className="text-center text-xs text-text-muted">
+                    By submitting this form you agree to our{' '}
+                    <Link to="/privacy-policy" className="text-maroon font-semibold hover:underline">
+                      Privacy Policy
+                    </Link>.
+                  </p>
 
                   <Button
                     type="submit"

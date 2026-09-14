@@ -87,6 +87,56 @@ export default function ChristmasPage({ onOpenBooking }) {
             </div>
           </div>
 
+          {/* The Room, Dressed For It — two real photographs, framed with
+              the same gold double-rule and corner-bracket vocabulary as
+              the invitation card above (just on navy instead of cream, so
+              they don't become a second light surface — the invitation
+              card stays the one pale thing in the room; these read as
+              framed prints on a dark wall next to it). Staggering the
+              second photo down (sm:mt-12) instead of a mirrored 2-up grid
+              keeps the same "assembled by hand" logic as the corkboard on
+              What's On. */}
+          <div className="max-w-[760px] mx-auto mt-16 relative z-10">
+            <div className="text-center mb-8">
+              <span className="block font-brand italic text-lg text-gold-text-dark mb-2">
+                The Room, Dressed For It
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 items-start">
+              {[
+                {
+                  src: '/assets/christmas_dining_room.jpg',
+                  alt: 'The dining room at The White Lion, decorated with a Christmas tree and garland',
+                  caption: 'Dressed For The Season',
+                },
+                {
+                  src: '/assets/christmas_table_crackers.jpg',
+                  alt: 'A table laid for Christmas dinner, with crackers and party hats ready to go',
+                  caption: 'Pull Up A Chair',
+                },
+              ].map((photo) => (
+                <div key={photo.src} className="relative border border-gold/40 p-1.5 shadow-xl bg-navy-950/40">
+                  <div className="relative border-2 border-gold/70 p-2">
+                    {[
+                      'top-0.5 left-0.5 border-t-2 border-l-2',
+                      'top-0.5 right-0.5 border-t-2 border-r-2',
+                      'bottom-0.5 left-0.5 border-b-2 border-l-2',
+                      'bottom-0.5 right-0.5 border-b-2 border-r-2',
+                    ].map((pos, j) => (
+                      <span key={j} className={`absolute ${pos} w-3 h-3 border-gold pointer-events-none`} aria-hidden="true" />
+                    ))}
+                    <div className="relative aspect-[3/4] overflow-hidden">
+                      <img src={photo.src} alt={photo.alt} loading="lazy" className="w-full h-full object-cover block transition-transform duration-500 hover:scale-105" />
+                      <div className="absolute bottom-0 inset-x-0 px-3 py-2.5 bg-gradient-to-t from-black/75 to-transparent">
+                        <span className="font-brand italic text-white text-sm">{photo.caption}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="text-center mt-16 relative z-10">
             <h3 className="text-white text-2xl mb-3 font-bold">
               Bookings Now Open for the Holiday Season

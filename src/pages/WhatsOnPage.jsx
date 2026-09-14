@@ -110,26 +110,51 @@ export default function WhatsOnPage({ onOpenBooking }) {
 
           {/* Sports & Darts — two smaller notices, pinned at a slight
               counter-rotation to the quiz notice above so the board reads
-              as assembled over time, not placed by a grid system. */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-16 max-w-[900px] mx-auto">
-            <PinnedNotice rotate={1.6} className="p-8">
-              <div className="flex items-center gap-2.5 mb-3 text-navy-800">
-                <Tv size={22} />
-                <h3 className="font-brand text-xl text-black font-bold">{sports.title}</h3>
-              </div>
-              <p className="text-text-muted leading-[1.6] mb-5 text-md">
-                {sports.desc}
-              </p>
-              <ul className="list-none flex flex-col gap-2 text-text-muted text-sm mb-6">
-                <li>✓ Premier League &amp; UEFA Champions League</li>
-                <li>✓ Six Nations Rugby Championship</li>
-                <li>✓ Formula 1 Grand Prix Weekends</li>
-                <li>✓ Cricket Internationals &amp; The Ashes</li>
-              </ul>
-              <Button variant="outline" size="sm" className="w-fit" onClick={onOpenBooking}>
-                Reserve a Table for the Match
-              </Button>
-            </PinnedNotice>
+              as assembled over time, not placed by a grid system.
+              items-start: Sports now carries an extra pinned photo above
+              its notice (a real shot exists for football, none for darts
+              yet), so the two columns are no longer forced to match
+              height — a corkboard doesn't stretch a shorter notice to
+              fill a taller neighbour. */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-16 items-start max-w-[900px] mx-auto">
+            <div>
+              {/* A photograph pinned to the board in its own right, not
+                  merged into the notice below it — that's why Darts
+                  doesn't need a matching photo. The board was never a
+                  matched set to begin with. */}
+              <PinnedNotice rotate={-2.2} className="mb-8">
+                <div className="relative aspect-[4/3] overflow-hidden">
+                  <img
+                    src={sports.image}
+                    alt="The White Lion's sports lounge — big screen football, the day's fixtures chalked up on the board, and leather armchairs to watch from"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute bottom-0 inset-x-0 px-3 py-2.5 bg-gradient-to-t from-black/75 to-transparent">
+                    <span className="font-brand italic text-white text-sm">Matchday at The White Lion</span>
+                  </div>
+                </div>
+              </PinnedNotice>
+
+              <PinnedNotice rotate={1.6} className="p-8">
+                <div className="flex items-center gap-2.5 mb-3 text-navy-800">
+                  <Tv size={22} />
+                  <h3 className="font-brand text-xl text-black font-bold">{sports.title}</h3>
+                </div>
+                <p className="text-text-muted leading-[1.6] mb-5 text-md">
+                  {sports.desc}
+                </p>
+                <ul className="list-none flex flex-col gap-2 text-text-muted text-sm mb-6">
+                  <li>✓ Premier League &amp; UEFA Champions League</li>
+                  <li>✓ Six Nations Rugby Championship</li>
+                  <li>✓ Formula 1 Grand Prix Weekends</li>
+                  <li>✓ Cricket Internationals &amp; The Ashes</li>
+                </ul>
+                <Button variant="outline" size="sm" className="w-fit" onClick={onOpenBooking}>
+                  Reserve a Table for the Match
+                </Button>
+              </PinnedNotice>
+            </div>
 
             <PinnedNotice rotate={-1.8} className="p-8">
               <div className="flex items-center gap-2.5 mb-3 text-navy-800">

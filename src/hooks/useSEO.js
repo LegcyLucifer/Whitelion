@@ -124,7 +124,13 @@ export function useSEO({ title, description, path = '/', image }) {
       url:          BASE_URL,
       telephone:    PHONE_E164,
       email:        siteData.info.email,
-      image:        ogImage,
+      // An array, not a single URL — schema.org's `image` accepts either,
+      // and giving Google real dish photography alongside whichever OG
+      // image the current page computed improves rich-result/knowledge-
+      // panel eligibility. Invisible to visitors; a pure search-engine signal.
+      // Deduplicated: a page that overrides `image` to one of these same
+      // two dish photos (e.g. Menu) would otherwise list it twice.
+      image:        [...new Set([ogImage, `${BASE_URL}/assets/food_dish_1.jpg`, `${BASE_URL}/assets/food_dish_3.jpg`])],
       description:  fullDesc,
       priceRange:   '££',
       currenciesAccepted: 'GBP',

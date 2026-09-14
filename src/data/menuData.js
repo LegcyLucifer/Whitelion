@@ -180,6 +180,10 @@ function dish(name, price, desc = '', opts = {}) {
     isVegan:  opts.isVegan  ?? false,
     hasGluten: opts.hasGluten ?? true,
     isChilli: opts.isChilli ?? (name.toLowerCase().includes('chilli') || name.toLowerCase().includes('chili')),
+    // Never inferred — set true only where the dish's own description
+    // already makes the claim (see the two Goat Curry entries below), same
+    // discipline as isVeg/isVegan above.
+    isSignature: opts.isSignature ?? false,
     allergens: opts.allergens ?? [],
     tags: [
       ...(opts.isVegan  ? ['Vegan (VG)']      : []),
@@ -194,6 +198,8 @@ function dish(name, price, desc = '', opts = {}) {
 const allDaySections = [
   {
     name: 'Starters',
+    image: '/assets/food_dish_1.jpg',
+    imageAlt: 'A starter dish at The White Lion — sharing plate with fresh herbs and a creamy dressing',
     items: [
       dish('Soup of the Day (V)',          '£5.95', 'Served with crusty bread. Please ask your server for today\'s soup.', { isVeg: true }),
       dish('Garlic Bread (V)',             '£4.50', 'Toasted baguette with garlic butter.', { isVeg: true }),
@@ -241,7 +247,7 @@ const allDaySections = [
     name: 'Indian Kitchen',
     items: [
       dish('Chicken Tikka Masala',        '£13.95', 'Tender chicken tikka in a rich creamy tomato sauce. Served with rice and naan.'),
-      dish('Goat Curry (on bone)',        '£14.95', 'Our signature dish — slow-cooked bone-in goat in a warming aromatic sauce. Served with rice and naan.'),
+      dish('Goat Curry (on bone)',        '£14.95', 'Our signature dish — slow-cooked bone-in goat in a warming aromatic sauce. Served with rice and naan.', { isSignature: true }),
       dish('Lamb Rogan Josh',             '£14.50', 'Slow-cooked Kashmiri-spiced lamb. Served with rice and naan.'),
       dish('Butter Chicken',              '£13.50', 'Mild, creamy tomato and butter sauce with tender chicken. Served with rice and naan.'),
       dish('Dal Makhani (V)',             '£11.95', 'Slow-cooked black lentils in a rich buttery tomato sauce. Served with rice and naan.', { isVeg: true }),
@@ -266,6 +272,8 @@ const allDaySections = [
   },
   {
     name: 'Desserts',
+    image: '/assets/food_dish_3.jpg',
+    imageAlt: 'A dessert at The White Lion — cheesecake with vanilla ice cream and berries',
     items: [
       dish('Sticky Toffee Pudding (V)',   '£6.95', 'Warm sponge cake with toffee sauce, served with vanilla ice cream.', { isVeg: true }),
       dish('Chocolate Fudge Cake (V)',    '£6.50', 'Rich chocolate fudge cake served with vanilla ice cream or cream.', { isVeg: true }),
@@ -281,6 +289,8 @@ const allDaySections = [
 const breakfastSections = [
   {
     name: 'Full Breakfasts (until 11:30am Sat–Sun)',
+    image: '/assets/menu_breakfast.jpg',
+    imageAlt: 'A weekend brunch spread — full English, eggs Benedict and Royale, and avocado toast',
     items: [
       dish('Full English Breakfast',      '£10.95', 'Two rashers of back bacon, two pork sausages, two fried eggs, grilled mushroom, grilled tomato, baked beans and toast.'),
       dish('Vegetarian Full Breakfast (V)', '£9.95', 'Two veggie sausages, two fried eggs, grilled mushroom, grilled tomato, baked beans, hash brown and toast.', { isVeg: true }),
@@ -339,6 +349,8 @@ const lunchSections = [
 const sundayRoastSections = [
   {
     name: 'Sunday Roasts',
+    image: '/assets/menu_sunday_roast.jpg',
+    imageAlt: 'A Sunday roast plate — beef, Yorkshire pudding, roast potatoes and seasonal vegetables',
     items: [
       dish('Roast Topside of Beef',       '£16.95', 'Slow-roasted topside of British beef, served with roast potatoes, Yorkshire pudding, honey-glazed carrots, seasonal vegetables and rich beef gravy.'),
       dish('Roast Leg of Lamb',           '£16.50', 'Slow-roasted British lamb, mint sauce, roast potatoes, Yorkshire pudding, honey-glazed carrots, seasonal vegetables and red wine gravy.'),
@@ -442,6 +454,8 @@ const drinksSections = [
   },
   {
     name: 'Cocktails',
+    image: '/assets/menu_cocktails.jpg',
+    imageAlt: 'A cocktail from the White Lion bar',
     items: [
       dish('White Lion Punch',           '£9.00', 'Vodka, passion fruit, pineapple, elderflower, lemonade.'),
       dish('Espresso Martini',           '£9.50', 'Vodka, Kahlúa, espresso, simple syrup.'),
@@ -491,7 +505,7 @@ const privateDiningSections = [
     items: [
       { ...dish('Chicken Tikka Masala',     '£13.95', 'Tender chicken tikka in a rich creamy tomato sauce.'), priceDineIn: '£13.95', priceTakeaway: 'Included in bundle' },
       { ...dish('Lamb Rogan Josh',          '£14.50', 'Slow-cooked Kashmiri-spiced lamb.'), priceDineIn: '£14.50', priceTakeaway: 'Included in bundle' },
-      { ...dish('Goat Curry (on bone)',     '£14.95', 'Our signature dish — slow-cooked bone-in goat in a warming aromatic sauce.'), priceDineIn: '£14.95', priceTakeaway: 'Included in bundle' },
+      { ...dish('Goat Curry (on bone)',     '£14.95', 'Our signature dish — slow-cooked bone-in goat in a warming aromatic sauce.', { isSignature: true }), priceDineIn: '£14.95', priceTakeaway: 'Included in bundle' },
       { ...dish('Butter Chicken',           '£13.50', 'Mild, creamy tomato and butter sauce with tender chicken.'), priceDineIn: '£13.50', priceTakeaway: 'Included in bundle' },
       { ...dish('Dal Makhani (V)',          '£11.95', 'Slow-cooked black lentils in a rich buttery tomato sauce.', { isVeg: true }), priceDineIn: '£11.95', priceTakeaway: 'Included in bundle' },
       { ...dish('Lamb Biryani',             '£14.95', 'Fragrant basmati rice with slow-cooked Kashmiri spiced lamb. Served with raita.'), priceDineIn: '£14.95', priceTakeaway: 'Included in bundle' },

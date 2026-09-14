@@ -16,7 +16,9 @@ export default function ReservationsPage({ showToast }) {
     { title: "Exterior & Signpost", src: "/assets/interior_dining_2.webp" },
     { title: "Cozy Dining Lounge", src: "/assets/interior_dining_3.webp" },
     { title: "Floral Patio Garden", src: "/assets/pub_patio_garden.jpg" },
-    { title: "Authentic Cuisine", src: "/assets/pub_building_or_interior.jpg" }
+    { title: "Authentic Cuisine", src: "/assets/pub_building_or_interior.jpg" },
+    { title: "Sports Corner & Lounge Seating", src: "/assets/reservations_lounge_corner.jpg" },
+    { title: "Quiz Night & High Tables", src: "/assets/reservations_quiz_room.jpg" }
   ];
 
   return (

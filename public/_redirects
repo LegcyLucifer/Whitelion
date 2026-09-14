@@ -1,0 +1,17 @@
+# Rules are matched top-to-bottom, first match wins — the specific Wix
+# redirects MUST come before the SPA catch-all below, or /* would always
+# win first and these would never be reached.
+
+# Known Wix -> this-app path differences + one indexed duplicate
+# (docs/ADMIN_PANEL_PLAN.md §9). Dormant until DNS actually points at this
+# Cloudflare Pages project — harmless before then.
+/what-s-on    /whats-on      301
+/partyvenue   /party-venue   301
+/contact-us   /contact       301
+/menu-1       /menu          301
+
+# SPA fallback — Cloudflare Pages equivalent of vercel.json's filesystem+
+# rewrite behavior. Real static assets and /api/* Functions are resolved
+# before _redirects is ever consulted, so this only catches paths that are
+# neither.
+/*    /index.html   200

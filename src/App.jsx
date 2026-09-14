@@ -14,6 +14,7 @@ import ReservationsPage from './pages/ReservationsPage';
 import PartyVenuePage from './pages/PartyVenuePage';
 import ChristmasPage from './pages/ChristmasPage';
 import ContactPage from './pages/ContactPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 import { CheckCircle2, AlertCircle } from 'lucide-react';
@@ -65,6 +66,7 @@ export default function App() {
             <Route path="/party-venue" element={<PageTransition><PartyVenuePage showToast={showToast} /></PageTransition>} />
             <Route path="/christmas" element={<PageTransition><ChristmasPage onOpenBooking={() => setIsBookingOpen(true)} /></PageTransition>} />
             <Route path="/contact" element={<PageTransition><ContactPage showToast={showToast} /></PageTransition>} />
+            <Route path="/privacy-policy" element={<PageTransition><PrivacyPolicyPage /></PageTransition>} />
             <Route path="*" element={<PageTransition><NotFoundPage onOpenBooking={() => setIsBookingOpen(true)} /></PageTransition>} />
           </Routes>
         </AnimatePresence>

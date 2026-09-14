@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion, useAnimation } from 'framer-motion';
 import { Phone, Mail, MapPin, ExternalLink, Send, Check, Facebook, Instagram } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -7,6 +7,7 @@ import Button from './Button';
 import FieldError from './FieldError';
 import { isValidEmail } from '../lib/validation';
 import { shakeAnimation } from '../lib/motion';
+import { subscribeNewsletter } from '../lib/api';
 
 // Lucide has no official TikTok glyph (brand marks are out of scope for that
 // icon set) — a small local outline instead of pulling in a whole brand-icon
@@ -48,6 +49,17 @@ export default function Footer({ onOpenBooking, showToast }) {
   const [consentError, setConsentError] = useState(false);
   const formControls = useAnimation();
   const emailRef = useRef(null);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    // React 18 StrictMode double-invokes effects in dev: mount, cleanup,
+    // mount again. Without resetting the flag back to true on that second
+    // mount, `isMounted.current` is permanently stuck false after the very
+    // first render in dev — silently breaking the delayed submit callback
+    // below on every use, not just in a real-unmount edge case.
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
 
   const handleEmailChange = (e) => {
     const value = e.target.value;
@@ -62,7 +74,7 @@ export default function Footer({ onOpenBooking, showToast }) {
     if (e.target.checked) setConsentError(false);
   };
 
-  const handleSubscribe = (e) => {
+  const handleSubscribe = async (e) => {
     e.preventDefault();
     if (isSubscribing) return;
     const noEmail = !isValidEmail(newsletterEmail);
@@ -76,14 +88,26 @@ export default function Footer({ onOpenBooking, showToast }) {
       return;
     }
     setIsSubscribing(true);
-    setTimeout(() => {
+    try {
+      const result = await subscribeNewsletter({ email: newsletterEmail, consent: consentChecked });
+      if (!isMounted.current) return;
       setIsSubscribing(false);
       setSubscribed(true);
-      showToast('Thank you for subscribing to The White Lion newsletter!');
+      showToast(
+        result.alreadySubscribed
+          ? "Looks like you're already on our list — thank you!"
+          : 'Thank you for subscribing to The White Lion newsletter!'
+      );
       setNewsletterEmail('');
       setConsentChecked(false);
-      setTimeout(() => setSubscribed(false), 5000);
-    }, 600);
+      setTimeout(() => {
+        if (isMounted.current) setSubscribed(false);
+      }, 5000);
+    } catch (err) {
+      if (!isMounted.current) return;
+      setIsSubscribing(false);
+      showToast(err.message || 'Could not subscribe you right now — please try again.', 'error');
+    }
   };
 
   const handleNav = () => {
@@ -272,7 +296,10 @@ export default function Footer({ onOpenBooking, showToast }) {
                   aria-invalid={consentError}
                   className={`w-4 h-4 mt-0.5 shrink-0 cursor-pointer accent-maroon ${consentError ? 'outline outline-2 outline-error outline-offset-2' : ''}`}
                 />
-                <span>I want to subscribe to The White Lion mailing list.</span>
+                <span>
+                  I want to subscribe to The White Lion mailing list. See our{' '}
+                  <Link to="/privacy-policy" className="underline hover:text-white">Privacy Policy</Link>.
+                </span>
               </label>
               <FieldError>{consentError && 'Please check the box to subscribe.'}</FieldError>
             </div>
@@ -283,6 +310,8 @@ export default function Footer({ onOpenBooking, showToast }) {
             the Explore column above. */}
         <div className="pt-4 mt-4 lg:pt-6 lg:mt-6 border-t border-white/10 text-xs text-text-muted-on-dark text-center">
           © {new Date().getFullYear()} The White Lion Amersham. All rights reserved. Pubs, Restaurant &amp; Indian Cuisine, Little Chalfont.
+          {' '}&middot;{' '}
+          <Link to="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
         </div>
       </div>
     </footer>

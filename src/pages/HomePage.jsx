@@ -17,7 +17,6 @@ import { useSEO } from '../hooks/useSEO';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import CtaBanner from '../components/CtaBanner';
-import LionMark from '../components/LionMark';
 
 export default function HomePage({ onOpenBooking }) {
   const navigate = useNavigate();
@@ -188,7 +187,7 @@ export default function HomePage({ onOpenBooking }) {
                 <span className="font-brand italic text-[clamp(0.95rem,3vw,1.125rem)] text-white/80 mb-4 drop-shadow-[0_4px_18px_rgba(0,0,0,0.6)]">
                   A Modern Classic. A Local Soul
                 </span>
-                <p className="font-brand text-[clamp(1.3rem,3.4vw,2.5rem)] leading-[1.35] drop-shadow-[0_4px_18px_rgba(0,0,0,0.6)]">
+                <p className="text-white/85 font-brand text-[clamp(1.3rem,3.4vw,2.5rem)] leading-[1.35] drop-shadow-[0_4px_18px_rgba(0,0,0,0.6)]">
                   "A proper pint. A proper curry. Under one roof in Amersham."
                 </p>
               </div>
@@ -205,7 +204,7 @@ export default function HomePage({ onOpenBooking }) {
                     as oversized/dominant at wider widths once it had genuine
                     dwell time to actually be looked at. */}
                 <h1 className="text-white text-[clamp(1.375rem,3.6vw,2.75rem)] font-bold tracking-[-0.015em] leading-[1.15] mb-5 drop-shadow-[0_4px_18px_rgba(0,0,0,0.6)]">
-                  Serving up the perfect pour and locally-sourced plates in the heart of Amersham
+                  A proper British pub. A proper Indian kitchen. One roof, 150 years in the making.
                 </h1>
                 {/* Was text-text-muted-on-dark (navy-300) — a colour tuned for
                     flat navy-800/900 surfaces (5.9-6.5:1) that disappeared
@@ -243,49 +242,55 @@ export default function HomePage({ onOpenBooking }) {
           reader something they didn't already know. Only one CTA here
           (View Menus): "Book a Table" was already offered seconds ago in
           the hero, so repeating it here trained readers to skim past both. */}
-      <section className="relative py-24 bg-navy-900 text-white overflow-hidden">
-        {/* The lion's one big moment: a large, quiet watermark rather than
-            a repeated logo — the kind of thing you only really notice once
-            you've read the text next to it. No photography in this
-            section at all, on purpose — the gallery directly below this
-            is the photographic proof; this one is pure record, deliberately
-            the one section on the site that isn't selling a visit, it's
-            just stating what's true. */}
-        <LionMark
-          size={520}
-          color="#ffffff"
-          strokeWidth={0.6}
-          className="absolute -right-24 top-1/2 -translate-y-1/2 opacity-[0.06] pointer-events-none hidden md:block"
-        />
-        <div className="w-full max-w-[1240px] mx-auto px-6 relative">
-          <div className="max-w-[640px]">
-            <span className="text-gold-text-dark font-brand italic text-lg">{siteData.history.age} on White Lion Road</span>
-            <h2 className="text-[clamp(2rem,3.4vw,2.75rem)] leading-[1.2] font-bold mt-2 mb-8">
-              Not Inherited. Chosen.
-            </h2>
+      <section className="relative py-24 bg-navy-900 text-white">
+        <div className="w-full max-w-[1240px] mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[640px_1fr] gap-12 lg:gap-16 items-center">
+            <div>
+              <span className="text-gold-text-dark font-brand italic text-lg">{siteData.history.age} on White Lion Road</span>
+              <h2 className="text-[clamp(2rem,3.4vw,2.75rem)] leading-[1.2] font-bold mt-2 mb-8">
+                Not Inherited. Chosen.
+              </h2>
 
-            {/* A short record, not a paragraph of marketing copy — each
-                line is independently true and independently checkable,
-                which is the point. */}
-            <div className="flex flex-col divide-y divide-white/12 border-y border-white/12">
-              <p className="py-5 text-lg text-white/85 leading-[1.7]">
-                {siteData.history.legend}
-              </p>
-              <p className="py-5 text-lg text-white/85 leading-[1.7]">
-                {siteData.history.repaint}
-              </p>
-              <p className="py-5 text-lg text-white/85 leading-[1.7]">
-                {siteData.history.fusion}
-              </p>
-              <p className="py-5 text-lg text-white/85 leading-[1.7]">
-                {siteData.history.locale}
-              </p>
+              {/* A short record, not a paragraph of marketing copy — each
+                  line is independently true and independently checkable,
+                  which is the point. */}
+              <div className="flex flex-col divide-y divide-white/12 border-y border-white/12">
+                <p className="py-5 text-lg text-white/85 leading-[1.7]">
+                  {siteData.history.legend}
+                </p>
+                <p className="py-5 text-lg text-white/85 leading-[1.7]">
+                  {siteData.history.repaint}
+                </p>
+                <p className="py-5 text-lg text-white/85 leading-[1.7]">
+                  {siteData.history.fusion}
+                </p>
+                <p className="py-5 text-lg text-white/85 leading-[1.7]">
+                  {siteData.history.locale}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-4 mt-8">
+                <Button variant="primary" icon={UtensilsCrossed} onClick={() => handleNav('menu')}>
+                  See What That Choice Looks Like
+                </Button>
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-4 mt-8">
-              <Button variant="primary" icon={UtensilsCrossed} onClick={() => handleNav('menu')}>
-                See What That Choice Looks Like
-              </Button>
+            {/* The building itself, not a stand-in mark — repainted white in
+                2015 (the "repaint" line opposite), so this is the literal
+                proof of that sentence, not a mood shot. Replaces the old
+                LionMark watermark, which read as decorative rather than
+                as the record this section otherwise commits to. */}
+            <div className="relative aspect-[4/5] overflow-hidden">
+              <img
+                src="/assets/pub_exterior_real.jpg"
+                alt="The White Lion, Amersham — repainted white, with its hanging lion-crest sign"
+                loading="lazy"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-0 inset-x-0 px-4 py-3 bg-gradient-to-t from-black/70 to-transparent">
+                <span className="font-brand italic text-white text-sm">The White Lion Today</span>
+              </div>
             </div>
           </div>
         </div>
@@ -491,7 +496,7 @@ export default function HomePage({ onOpenBooking }) {
           its own distinct CTA copy rather than a fourth "Book a Table". */}
       <section
         className="relative min-h-[460px] flex items-center justify-center bg-cover bg-center text-center"
-        style={{ backgroundImage: `url(/assets/interior_dining_2.webp)` }}
+        style={{ backgroundImage: `url(/assets/pub_exterior_real.jpg)` }}
       >
         <div className="absolute inset-0 bg-black/60" />
         <div className="w-full max-w-[800px] mx-auto px-6 relative z-10 flex flex-col items-center">
